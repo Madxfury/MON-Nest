@@ -37,20 +37,41 @@ function App() {
   const [connected, setConnected] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [walletAccount, setWalletAccount] = useState('');
+  const [connecting, setConnecting] = useState(false);
   useEffect(() => {
     const provider = window.ethereum;
-    const changed = (...args: unknown[]) => {
-      const accounts = args[0] as string[];
+    let active = true;
+    let accountEventReceived = false;
+    const acceptAccounts = (accounts: string[]) => {
+      if (!active) return;
       setWalletAccount(accounts[0] || '');
       setConnected(Boolean(accounts[0]));
+      if (!accounts[0]) setShowProfile(false);
+    };
+    if (provider && localStorage.getItem('mon-nest-wallet-disconnected') !== 'true') {
+      // Read previously authorized accounts without opening a wallet permission prompt.
+      provider.request({ method: 'eth_accounts' }).then(accounts => {
+        if (!accountEventReceived) acceptAccounts(accounts as string[]);
+      }).catch(() => {});
+    }
+    const changed = (...args: unknown[]) => {
+      accountEventReceived = true;
+      const accounts = args[0] as string[];
+      if (localStorage.getItem('mon-nest-wallet-disconnected') !== 'true') acceptAccounts(accounts);
     };
     const disconnected = () => { setConnected(false); setWalletAccount(''); };
     provider?.on?.('accountsChanged', changed);
     provider?.on?.('disconnect', disconnected);
     return () => {
+      active = false;
       provider?.removeListener?.('accountsChanged', changed);
       provider?.removeListener?.('disconnect', disconnected);
     };
+  }, []);
+  useEffect(() => {
+    const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') { setSelected(null); setMenu(false); } };
+    window.addEventListener('keydown', escape);
+    return () => window.removeEventListener('keydown', escape);
   }, []);
   const [menu, setMenu] = useState(false);
   const [saved, setSaved] = useState<number[]>([]);
@@ -82,16 +103,14 @@ function App() {
   ), [city, search]);
 
   const connect = async () => {
+    if (connecting) return;
+    setConnecting(true);
     try {
       if (window.ethereum) {
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' }) as string[];
         if (!accounts[0]) return;
         setWalletAccount(accounts[0]);
-        try {
-          await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x279f' }] });
-        } catch {
-          setNotice('Wallet connected; switch to Monad Testnet to transact');
-        }
+        localStorage.removeItem('mon-nest-wallet-disconnected');
       } else {
         setNotice('Install an Ethereum-compatible wallet to connect your account.');
         return;
@@ -102,10 +121,13 @@ function App() {
     } catch {
       setNotice('Wallet connection was cancelled');
       window.setTimeout(() => setNotice(''), 2600);
+    } finally {
+      setConnecting(false);
     }
   };
 
   const toggleSaved = (id: number) => {
+    if (!walletAccount) { setNotice('Connect your wallet to keep a personal shortlist.'); connect(); return; }
     recordHomeHistory(id, saved.includes(id) ? 'Removed from saved homes' : 'Saved home');
     setSaved(current => {
       const next = current.includes(id) ? current.filter(x => x !== id) : [...current, id];
@@ -114,7 +136,7 @@ function App() {
     });
   };
 
-  if (connected && walletAccount && showProfile) return <Profile key={walletAccount} address={walletAccount} saved={saved} onHome={() => setShowProfile(false)} onDisconnect={() => { setConnected(false); setWalletAccount(''); setShowProfile(false); }} />;
+  if (connected && walletAccount && showProfile) return <Profile key={walletAccount} address={walletAccount} saved={saved} onHome={() => { setShowProfile(false); window.setTimeout(() => document.getElementById('homes')?.scrollIntoView({ behavior: 'smooth' }), 0); }} onDisconnect={() => { localStorage.setItem('mon-nest-wallet-disconnected', 'true'); setConnected(false); setWalletAccount(''); setShowProfile(false); }} />;
 
   return <div id="top">
     <header className="nav-wrap">
@@ -127,7 +149,7 @@ function App() {
           <a href="#jury" onClick={() => setMenu(false)}>Become a juror</a>
           <a href="#architecture" onClick={() => setMenu(false)}>Architecture</a>
         </div>
-        <button className="wallet-btn" onClick={connected ? () => setShowProfile(true) : connect}><Wallet size={17} />{connected ? 'Profile' : 'Connect wallet'}</button>
+        <button className="wallet-btn" disabled={connecting} aria-busy={connecting} onClick={connected ? () => setShowProfile(true) : connect}><Wallet size={17} />{connected ? `Profile · ${shorten(walletAccount)}` : connecting ? 'Connecting…' : 'Connect wallet'}</button>
         <button className="menu-btn" onClick={() => setMenu(!menu)} aria-label="Toggle menu">{menu ? <X /> : <Menu />}</button>
       </nav>
     </header>
