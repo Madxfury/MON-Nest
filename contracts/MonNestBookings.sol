@@ -34,8 +34,10 @@ contract MonNestBookings is Ownable, ReentrancyGuard {
         broker = initialBroker;
         emit BrokerChanged(address(0), initialBroker);
 
-        for (uint256 listingId = 1; listingId <= 48; listingId++) {
-            _setListing(listingId, 0, 30 days, true);
+        // Twelve catalog homes are complimentary 0 MON stays; paid homes rent through RentalEscrow.
+        uint256[12] memory complimentaryListingIds = [uint256(4), 27, 29, 31, 32, 36, 38, 42, 45, 46, 47, 48];
+        for (uint256 i; i < complimentaryListingIds.length; i++) {
+            _setListing(complimentaryListingIds[i], 0, 30 days, true);
         }
     }
 

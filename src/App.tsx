@@ -6,6 +6,10 @@ import { monadTestnet } from 'viem/chains';
 import { ArrowDownRight, ArrowRight, ArrowUpRight, BadgeCheck, BedDouble, Bell, Building2, CalendarDays, Check, ChevronDown, CircleDollarSign, Clock3, FileCheck2, Gavel, Heart, Home as HomeIcon, KeyRound, LayoutDashboard, LogOut, MapPin, Menu, MessageCircle, ReceiptText, Search, ShieldCheck, Sparkles, UserRound, Wallet, X } from 'lucide-react';
 import { homes, type Home, shorten } from './data';
 import TestPayment from './TestPayment';
+import EscrowBooking from './EscrowBooking';
+import AccountSwitcher from './AccountSwitcher';
+import EscrowRentals from './EscrowRentals';
+import { escrowProperties, explorer, registryAddress } from './escrow';
 import { useWallet } from './wallet/WalletProvider';
 import IndexedAccount from './IndexedAccount';
 import SponsorIntegrations from './SponsorIntegrations';
@@ -16,7 +20,7 @@ function Logo({ onHome }: { onHome?: () => void }) {
   return <a className="logo" href="#top" aria-label="MON-Nest home" onClick={onHome ? event => { event.preventDefault(); onHome(); } : undefined}><span className="logo-mark">M</span><span>MON—NEST</span></a>;
 }
 
-function Profile({ address, saved, bookings, bookingHistory, accountHistory, accountHistoryStatus, availability, onHome, onDisconnect }: { address: string; saved: number[]; bookings: Record<number, BookingSnapshot>; bookingHistory: Record<number, BookingHistoryEvent[]>; accountHistory: BookingHistoryEvent[]; accountHistoryStatus: 'idle' | 'loading' | 'ready' | 'error'; availability: 'loading' | 'ready' | 'error' | 'unconfigured'; onHome: () => void; onDisconnect: () => void }) {
+function Profile({ address, saved, bookings, bookingHistory, accountHistory, accountHistoryStatus, availability, onHome, onOpenHome, onDisconnect }: { address: string; saved: number[]; bookings: Record<number, BookingSnapshot>; bookingHistory: Record<number, BookingHistoryEvent[]>; accountHistory: BookingHistoryEvent[]; accountHistoryStatus: 'idle' | 'loading' | 'ready' | 'error'; availability: 'loading' | 'ready' | 'error' | 'unconfigured'; onHome: () => void; onOpenHome: (homeId: number) => void; onDisconnect: () => void }) {
   const { kind } = useWallet();
   const [balance, setBalance] = useState<string | null>(null);
   useEffect(() => {
@@ -48,6 +52,7 @@ function Profile({ address, saved, bookings, bookingHistory, accountHistory, acc
       <section className="panel profile-wallet">
         <h2>{kind === 'mera' ? 'Your passkey account' : 'Your wallet'}</h2>
         <p className="wallet-address">{address}</p>
+        <AccountSwitcher/>
         <div className="profile-wallet-actions">
           <button className="quiet-button" onClick={async () => { try { await navigator.clipboard.writeText(address); setCopied(true); } catch { setCopied(false); } }}>{copied ? 'Copied' : 'Copy address'}</button>
           <a className="quiet-button" target="_blank" rel="noreferrer" href={`https://testnet.monadvision.com/address/${address}`}>View on explorer <ArrowUpRight size={15}/></a>
@@ -56,6 +61,7 @@ function Profile({ address, saved, bookings, bookingHistory, accountHistory, acc
         <dl className="profile-facts"><div><dt>Network balance</dt><dd>{balance === null ? 'Loading…' : balance === 'Unavailable' ? balance : `${balance} MON`}</dd></div><div><dt>Network</dt><dd>Monad Testnet</dd></div></dl>
         <button className="quiet-button" onClick={onDisconnect}><LogOut size={16}/>Disconnect account</button>
       </section>
+      <EscrowRentals address={address} onOpenHome={onOpenHome}/>
       <section className="profile-saved"><div className="section-head"><div><span className="kicker">ON MONAD TESTNET</span><h2>Your bookings</h2></div></div>{userRentals.length ? <div className="profile-bookings">{userRentals.map(rental => <article className="profile-booking panel" key={`${rental.home.id}:${rental.bookedAt}`}><img src={rental.home.image} alt={rental.home.title}/><div><span className={`rental-pill ${rental.active ? 'active' : ''}`}>{rental.active ? 'Rented' : 'Ended'}</span><h3>{rental.home.title}</h3><p>{rental.home.area}, {rental.home.city}</p><small>Booked {new Date(rental.bookedAt * 1000).toLocaleDateString(undefined, { dateStyle: 'medium' })} · Until {new Date(rental.expiresAt * 1000).toLocaleDateString(undefined, { dateStyle: 'medium' })}</small></div><a href={`https://testnet.monadvision.com/${rental.txHash ? `tx/${rental.txHash}` : `address/${bookingsAddress}`}`} target="_blank" rel="noreferrer">View receipt ↗</a></article>)}</div> : <div className="panel"><h3>{availability === 'loading' || loadingPastBookings ? 'Checking bookings…' : availability === 'error' ? 'Booking records are temporarily unavailable' : 'No bookings for this wallet yet'}</h3><p>{availability === 'unconfigured' ? 'Onchain bookings will appear here when the booking contract is live.' : 'Book one of the 0 MON testnet homes to see its record here.'}</p><button className="primary-btn" onClick={onHome}>Explore homes <ArrowRight size={16}/></button></div>}</section>
       <section className="profile-saved"><div className="section-head"><div><span className="kicker">YOUR SHORTLIST</span><h2>Saved homes</h2></div></div>{saved.length ? <div className="home-grid">{homes.filter(home => saved.includes(home.id)).map(home => <article className="home-card" key={home.id}><div className="home-image"><img loading="lazy" src={home.image} alt={home.title}/></div><div className="home-content"><div className="home-location">{home.area}, {home.city}</div><h3>{home.title}</h3><div className="home-bottom"><strong>{home.rent} MON / month</strong><button onClick={onHome}>Explore <ArrowRight size={15}/></button></div></div></article>)}</div> : <div className="panel"><h3>No saved homes yet</h3><p>Tap the heart on a home to add it to your shortlist.</p><button className="primary-btn" onClick={onHome}>Explore homes <ArrowRight size={16}/></button></div>}</section>
       <IndexedAccount address={address}/>
@@ -89,7 +95,7 @@ function App({ alchemyConfigured = false }: { alchemyConfigured?: boolean }) {
     try {
       const [onchainBroker, snapshots] = await Promise.all([
         bookingsClient.readContract({ address: bookingsAddress, abi: bookingsAbi, functionName: 'broker' }),
-        readAllBookings(homes.map(home => home.id)),
+        readAllBookings(homes.filter(home => home.complimentary).map(home => home.id)),
       ]);
       if (onchainBroker.toLowerCase() !== expectedBrokerAddress.toLowerCase()) throw new Error('Broker address does not match');
       setBookings(snapshots);
@@ -197,7 +203,7 @@ function App({ alchemyConfigured = false }: { alchemyConfigured?: boolean }) {
     });
   };
 
-  if (connected && walletAccount && showProfile) return <Profile key={walletAccount} address={walletAccount} saved={saved} bookings={bookings} bookingHistory={bookingHistory} accountHistory={accountHistory} accountHistoryStatus={accountHistoryStatus} availability={availability} onHome={() => { setShowProfile(false); window.setTimeout(() => document.getElementById('homes')?.scrollIntoView({ behavior: 'smooth' }), 0); }} onDisconnect={() => { wallet.disconnect(); setShowProfile(false); }} />;
+  if (connected && walletAccount && showProfile) return <Profile key={walletAccount} onOpenHome={homeId => { setShowProfile(false); setSelected(homes.find(home => home.id === homeId) ?? null); }} address={walletAccount} saved={saved} bookings={bookings} bookingHistory={bookingHistory} accountHistory={accountHistory} accountHistoryStatus={accountHistoryStatus} availability={availability} onHome={() => { setShowProfile(false); window.setTimeout(() => document.getElementById('homes')?.scrollIntoView({ behavior: 'smooth' }), 0); }} onDisconnect={() => { wallet.disconnect(); setShowProfile(false); }} />;
 
   return <div id="top">
     <header className="nav-wrap">
@@ -222,9 +228,9 @@ function App({ alchemyConfigured = false }: { alchemyConfigured?: boolean }) {
         <div className="hero-copy">
           <div className="eyebrow"><span className="status-dot" />MON-Nest · Monad Testnet prototype</div>
           <h1>Rent without the<br/><em>trust gap.</em></h1>
-          <p className="hero-sub">Discover a home, connect your wallet, and make a 0 MON testnet booking with availability everyone can check.</p>
+          <p className="hero-sub">Discover a home, connect your wallet, and rent through testnet escrow that protects your rent and deposit, or try one of twelve free 0 MON stays.</p>
           <div className="hero-actions"><a className="primary-btn" href="#homes">Explore homes <ArrowRight size={18}/></a><a className="text-link" href="#how">See how it works <span>↘</span></a></div>
-          <div className="proof-row"><div><strong>48 homes</strong><span>testnet booking catalog</span></div><div><strong>0 MON</strong><span>rent and deposit</span></div><div><strong>30 days</strong><span>shared booking period</span></div></div>
+          <div className="proof-row"><div><strong>36 homes</strong><span>rent through escrow</span></div><div><strong>12 homes</strong><span>free 0 MON stays</span></div><div><strong>2%</strong><span>flat platform fee</span></div></div>
         </div>
         <div className="hero-visual">
           <div className="hero-photo" role="img" aria-label="Bright, modern rental home interior" />
@@ -234,10 +240,10 @@ function App({ alchemyConfigured = false }: { alchemyConfigured?: boolean }) {
         </div>
       </section>
 
-      <section className="ticker"><div>0 MON BOOKINGS <span>✦</span> SHARED AVAILABILITY <span>✦</span> WALLET RECORDS <span>✦</span> MONAD TESTNET <span>✦</span> ILLUSTRATIVE HOMES <span>✦</span></div></section>
+      <section className="ticker"><div>ESCROW-PROTECTED RENT <span>✦</span> FREE 0 MON STAYS <span>✦</span> SHARED AVAILABILITY <span>✦</span> WALLET RECORDS <span>✦</span> MONAD TESTNET <span>✦</span> ILLUSTRATIVE HOMES <span>✦</span></div></section>
 
       <section className="homes-section container" id="homes">
-        <div className="section-head"><div><span className="kicker">EXPLORE THE COLLECTION</span><h2>A better place to land.</h2></div><p>Explore 48 illustrative homes across eight cities. Every home supports a 0 MON testnet booking once the booking contract is live.</p></div>
+        <div className="section-head"><div><span className="kicker">EXPLORE THE COLLECTION</span><h2>A better place to land.</h2></div><p>Explore 48 illustrative homes across eight cities. Twelve offer free 0 MON testnet stays; the other 36 rent through testnet escrow that protects your rent and deposit.</p></div>
         <div className="filters">
           <div className="search-box"><MapPin size={18}/><input aria-label="Search homes by area or name" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by area or home" /></div>
           <label className="select-wrap"><select aria-label="Filter by city" value={city} onChange={e => setCity(e.target.value)}><option>All cities</option>{[...new Set(homes.map(home => home.city))].sort().map(name => <option key={name}>{name}</option>)}</select><ChevronDown size={16}/></label>
@@ -253,9 +259,9 @@ function App({ alchemyConfigured = false }: { alchemyConfigured?: boolean }) {
         {visibleHomes.length > 12 && <nav className="catalog-pagination" aria-label="Home listing pages"><button disabled={page === 1} onClick={() => setPage(page - 1)}>Previous</button><span>Page {page} of {Math.ceil(visibleHomes.length / 12)}</span><button disabled={page === Math.ceil(visibleHomes.length / 12)} onClick={() => setPage(page + 1)}>Next <ArrowRight size={15}/></button></nav>}
       </section>
 
-      <section className="steps" id="how"><div className="container"><div className="section-head light"><div><span className="kicker">HOW THE TESTNET BOOKING WORKS</span><h2>Four clear steps.</h2></div><p>All 48 homes use one shared contract record per home. These illustrative bookings do not grant real tenancy.</p></div><div className="step-grid">
-        <div className="step"><span>01</span><div className="step-icon"><Building2/></div><h3>Choose a home</h3><p>Open a 0 MON listing and check its current availability on Monad Testnet.</p></div>
-        <div className="step"><span>02</span><div className="step-icon"><Wallet/></div><h3>Connect your wallet</h3><p>Review the 0 MON amount and network gas in your wallet before approving.</p></div>
+      <section className="steps" id="how"><div className="container"><div className="section-head light"><div><span className="kicker">HOW THE TESTNET BOOKING WORKS</span><h2>Four clear steps.</h2></div><p>Free homes share one booking record per home; paid homes hold rent and deposit in escrow until the lease closes or a jury rules. These illustrative listings do not grant real tenancy.</p></div><div className="step-grid">
+        <div className="step"><span>01</span><div className="step-icon"><Building2/></div><h3>Choose a home</h3><p>Open a listing to see its live availability or its escrow terms on Monad Testnet.</p></div>
+        <div className="step"><span>02</span><div className="step-icon"><Wallet/></div><h3>Connect your wallet</h3><p>Review the amount and network gas in your wallet before approving.</p></div>
         <div className="step"><span>03</span><div className="step-icon"><FileCheck2/></div><h3>Confirm the booking</h3><p>The contract records your address and a 30-day booking after the transaction succeeds.</p></div>
         <div className="step"><span>04</span><div className="step-icon"><BadgeCheck/></div><h3>See shared status</h3><p>The home shows Rented for other visitors until the booking period ends.</p></div>
       </div></div></section>
@@ -270,14 +276,14 @@ function App({ alchemyConfigured = false }: { alchemyConfigured?: boolean }) {
         <div className="section-head"><div><span className="kicker">UNDER THE HOOD</span><h2>Built for trust.<br/>Designed for everyday renting.</h2></div><p>Consumer Products & Payments is our primary track. Here’s where Monad is used today and where sponsor services fit into the rental journey.</p></div>
         <div className="architecture-flow">
           <article><span>01 · EXPERIENCE</span><h3>Find & connect</h3><p>Next.js serves the catalog and account profile. Mera derives a signing account from a passkey; existing wallets can also connect. No server stores your signing key.</p><small>Mera SDK integrated</small></article>
-          <article><span>02 · TRANSACTIONS</span><h3>Book & verify</h3><p>All 48 homes use a booking contract to prevent duplicate active reservations and expose shared status. The app waits for a receipt before confirming.</p><small>{bookingsAddress ? 'Contract configured' : 'Contract deployment pending'}</small></article>
+          <article><span>02 · TRANSACTIONS</span><h3>Book & verify</h3><p>Free homes use a booking contract that prevents duplicate active reservations; paid homes open an escrow agreement against a verified property record. The app waits for a receipt before confirming.</p><small>{bookingsAddress ? 'Contract configured' : 'Contract deployment pending'}</small></article>
           <article><span>03 · RENTAL PROTOCOL</span><h3>Protect & resolve</h3><p>Separate Solidity contracts cover property verification, native MON escrow, staked jury voting, and reputation. These are locally tested and not connected to live rentals.</p><small>Written & locally tested</small></article>
           <article><span>04 · ACCOUNT RECORDS</span><h3>Read & verify</h3><p>Envio handlers turn booking, escrow, dispute, vote, and reputation events into account records. Booking history also reads chain logs when indexing is unavailable.</p><small>Indexer implemented · hosting pending</small></article>
         </div>
         <SponsorIntegrations alchemyConfigured={alchemyConfigured}/>
       </section>
 
-      <section className="cta container"><div><span className="kicker">TRY THE BOOKING FLOW</span><h2>Explore a home.<br/>See its status.</h2></div><div><p>Choose any of the 48 0 MON testnet homes and review the booking details before connecting a wallet.</p><a href="#homes" className="primary-btn">Find your nest <ArrowRight size={18}/></a></div></section>
+      <section className="cta container"><div><span className="kicker">TRY THE BOOKING FLOW</span><h2>Explore a home.<br/>See its status.</h2></div><div><p>Rent a paid home through escrow or choose a free 0 MON stay, and review every detail before connecting a wallet.</p><a href="#homes" className="primary-btn">Find your nest <ArrowRight size={18}/></a></div></section>
     </main>
 
     <footer><div className="container footer-grid"><div><Logo/><p>Explore homes and verify testnet booking status.</p></div><div><strong>Explore</strong><a href="#homes">Homes</a><a href="#how">How it works</a><a href="#jury">Roadmap</a></div><div><strong>Build</strong><a href="https://docs.monad.xyz" target="_blank" rel="noreferrer">Monad docs</a><a href="https://github.com/Madxfury/MON-Nest" target="_blank" rel="noreferrer">GitHub</a><a href="https://hackathon.monad.xyz/tracks" target="_blank" rel="noreferrer">Metropolis</a></div><div className="footer-note"><span>Built for Metropolis 2026</span><small>Consumer Products & Payments · Monad</small></div></div><div className="container foot-bottom"><span>© 2026 MON-Nest</span><span>Prototype · Illustrative homes · Testnet only</span></div></footer>
@@ -287,14 +293,14 @@ function App({ alchemyConfigured = false }: { alchemyConfigured?: boolean }) {
         <button ref={modalCloseRef} className="modal-close" aria-label="Close listing details" onClick={() => setSelected(null)}><X/></button>
         <img src={selected.image} alt={`${selected.title} illustrative interior`}/>
         <div className="modal-body">
-          <span className="kicker">{selected.complimentary ? '0 MON TESTNET HOME' : 'HOME PREVIEW'}</span>
+          <span className="kicker">{selected.complimentary ? '0 MON TESTNET HOME' : 'TESTNET ESCROW RENTAL'}</span>
           <h2 id="listing-title">{selected.title}</h2>
           <p><MapPin size={16}/>{selected.area}, {selected.city}</p>
           <div className="price-box"><div><span>{selected.complimentary ? '30-day booking' : 'Illustrative monthly rent'}</span><strong>{selected.rent} MON</strong></div><div><span>Deposit</span><strong>{selected.deposit} MON</strong></div><div><span>Platform fee</span><strong>{(selected.rent * .02).toFixed(2)} MON</strong></div></div>
-          {selected.complimentary ? <TestPayment key={selected.id} home={selected} booking={bookings[selected.id] || null} availability={availability} walletAccount={walletAccount} onConnect={connect} onRefresh={refreshBookings} onBooked={async (homeId: number, _hash: Hash) => { recordHomeHistory(homeId, 'Booked on Monad Testnet'); await Promise.all([refreshBookings(), refreshHistory(homeId)]); }}/> : <p className="booking-state">This is a preview home. Online booking is not enabled for it.</p>}
+          {selected.complimentary ? <TestPayment key={selected.id} home={selected} booking={bookings[selected.id] || null} availability={availability} walletAccount={walletAccount} onConnect={connect} onRefresh={refreshBookings} onBooked={async (homeId: number, _hash: Hash) => { recordHomeHistory(homeId, 'Booked on Monad Testnet'); await Promise.all([refreshBookings(), refreshHistory(homeId)]); }}/> : <EscrowBooking key={selected.id} home={selected} walletAccount={walletAccount} onConnect={connect}/>}
           <section className="property-history" aria-label="Property history">
             <h3>Home history</h3>
-            {!selected.complimentary ? <p>This preview home has no connected onchain listing or verified property history.</p> : !bookingsAddress ? <p>Booking history will be available after the testnet contract is deployed.</p> : historyStatus[selected.id] === 'loading' ? <p>Loading onchain booking history…</p> : historyStatus[selected.id] === 'error' ? <p>Full history is unavailable. Current availability is shown above; the indexer may need to catch up.</p> : bookingHistory[selected.id]?.length ? <ol>{[...bookingHistory[selected.id]].reverse().map(event => <li key={event.txHash + event.logIndex}><div><strong>Booked by {shorten(event.renter)}</strong><time dateTime={new Date(event.bookedAt * 1000).toISOString()}>{new Date(event.bookedAt * 1000).toLocaleDateString()} · Until {new Date(event.expiresAt * 1000).toLocaleDateString()}</time></div><a href={`https://testnet.monadvision.com/tx/${event.txHash}`} target="_blank" rel="noreferrer">Receipt ↗</a></li>)}</ol> : availability === 'ready' && bookings[selected.id]?.bookedAt ? <p>Latest testnet booking: {new Date(bookings[selected.id].bookedAt * 1000).toLocaleDateString(undefined, { dateStyle: 'medium' })} by {shorten(bookings[selected.id].renter)}. {bookings[selected.id].rented ? 'Currently rented.' : 'Booking ended.'}</p> : historyStatus[selected.id] === 'ready' ? <p>No onchain bookings are recorded for this home yet.</p> : <p>Onchain history has not been verified yet.</p>}
+            {!selected.complimentary ? (escrowProperties[String(selected.id)] && registryAddress ? <p>Ownership is verified in the Monad Testnet property registry as record #{escrowProperties[String(selected.id)]}. <a href={`${explorer}/address/${registryAddress}`} target="_blank" rel="noreferrer">View registry ↗</a></p> : <p>This home's verified property record appears once the testnet contracts are deployed.</p>) : !bookingsAddress ? <p>Booking history will be available after the testnet contract is deployed.</p> : historyStatus[selected.id] === 'loading' ? <p>Loading onchain booking history…</p> : historyStatus[selected.id] === 'error' ? <p>Full history is unavailable. Current availability is shown above; the indexer may need to catch up.</p> : bookingHistory[selected.id]?.length ? <ol>{[...bookingHistory[selected.id]].reverse().map(event => <li key={event.txHash + event.logIndex}><div><strong>Booked by {shorten(event.renter)}</strong><time dateTime={new Date(event.bookedAt * 1000).toISOString()}>{new Date(event.bookedAt * 1000).toLocaleDateString()} · Until {new Date(event.expiresAt * 1000).toLocaleDateString()}</time></div><a href={`https://testnet.monadvision.com/tx/${event.txHash}`} target="_blank" rel="noreferrer">Receipt ↗</a></li>)}</ol> : availability === 'ready' && bookings[selected.id]?.bookedAt ? <p>Latest testnet booking: {new Date(bookings[selected.id].bookedAt * 1000).toLocaleDateString(undefined, { dateStyle: 'medium' })} by {shorten(bookings[selected.id].renter)}. {bookings[selected.id].rented ? 'Currently rented.' : 'Booking ended.'}</p> : historyStatus[selected.id] === 'ready' ? <p>No onchain bookings are recorded for this home yet.</p> : <p>Onchain history has not been verified yet.</p>}
             <h4>{walletAccount ? 'Your recent activity' : 'Browser activity'}</h4><small>Saved in this browser; contract bookings are shared publicly.</small><ol>{homeHistory.filter(event => event.homeId === selected.id).slice(0, 8).map((event, index) => <li key={event.at + index}><strong>{event.action}</strong><time dateTime={event.at}>{new Date(event.at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</time></li>)}</ol>
           </section>
         </div>

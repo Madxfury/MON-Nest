@@ -2,6 +2,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { isAddress, ZeroAddress, Interface } = require('ethers');
 require('dotenv').config({ path: '.env.local', quiet: true });
+// Addresses written by scripts/deploy.js; environment variables still take precedence.
+const deployment = fs.existsSync('src/deployments/monadTestnet.json') ? JSON.parse(fs.readFileSync('src/deployments/monadTestnet.json', 'utf8')) : {};
 const names = {
   Bookings: ['MonNestBookings', 'NEXT_PUBLIC_MON_NEST_BOOKINGS_ADDRESS'],
   PropertyRegistry: ['PropertyRegistry', 'NEXT_PUBLIC_PROPERTY_REGISTRY_ADDRESS'],
@@ -9,11 +11,11 @@ const names = {
   DisputeCourt: ['DisputeCourt', 'NEXT_PUBLIC_DISPUTE_COURT_ADDRESS'],
   Reputation: ['Reputation', 'NEXT_PUBLIC_REPUTATION_ADDRESS'],
 };
-const start = process.env.INDEXER_START_BLOCK || process.env.NEXT_PUBLIC_MON_NEST_BOOKINGS_DEPLOY_BLOCK;
+const start = process.env.INDEXER_START_BLOCK || process.env.NEXT_PUBLIC_MON_NEST_BOOKINGS_DEPLOY_BLOCK || (deployment.StartBlock == null ? undefined : String(deployment.StartBlock));
 if (!start || !/^\d+$/.test(start) || !Number.isSafeInteger(Number(start))) throw new Error('Set INDEXER_START_BLOCK to the earliest protocol deployment block.');
 const contracts = [], addresses = [];
 for (const [name, [artifactName, variable]] of Object.entries(names)) {
-  const address = process.env[variable];
+  const address = process.env[variable] || deployment[artifactName];
   if (!address) throw new Error(`Set ${variable} to a verified deployment before indexing the rental protocol.`);
   if (address && (!isAddress(address) || address === ZeroAddress)) throw new Error(`Invalid ${variable}`);
   const artifact = JSON.parse(fs.readFileSync(path.join('artifacts/contracts', `${artifactName}.sol`, `${artifactName}.json`), 'utf8'));

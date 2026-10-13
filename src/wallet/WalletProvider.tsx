@@ -6,11 +6,15 @@ import { monadTestnet } from 'viem/chains';
 import { HDKey } from '@scure/bip32';
 import { createPasskeyWithPrfOutput, getPasskeyPrfOutput, createSecp256k1SigningSession, type Secp256k1SigningSession } from '@category-labs/mera';
 import { toViemAccount } from '@category-labs/mera/viem';
+import { ensureMonadTestnet } from '../escrow';
+import { chooseAccount, permittedAccounts, rememberTabAccount, signerFor, tabAccountFrom } from '../walletSession';
 
 type Transaction = { to: Address; data?: Hex; value?: bigint };
 type WalletState = {
   address: Address | null; kind: 'mera' | 'injected' | null; connecting: boolean;
   connect: () => Promise<void>; disconnect: () => void;
+  /** Browser-wallet accounts this site may use; each tab picks its own. */
+  accounts: string[]; switchAccount: (account: string) => void;
   send: (tx: Transaction) => Promise<Hash>;
 };
 const Context = createContext<WalletState | null>(null);
@@ -22,6 +26,7 @@ const ACCOUNT_PATH = "m/44'/60'/0'/0/0";
 export function WalletProvider({ children }: { children: ReactNode }) {
   const [address, setAddress] = useState<Address | null>(null);
   const [kind, setKind] = useState<WalletState['kind']>(null);
+  const [accounts, setAccounts] = useState<string[]>([]);
   const [connecting, setConnecting] = useState(false);
   const [chooser, setChooser] = useState(false);
   const [error, setError] = useState('');
@@ -54,9 +59,15 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const disconnect = useCallback(() => {
     session.current?.end(); session.current = null;
+    // A browser wallet signs out only this tab; other tabs keep their own accounts.
+    rememberTabAccount('');
+    if (kind === 'mera') { localStorage.setItem('mon-nest-wallet-disconnected', 'true'); localStorage.removeItem(LAST_WALLET); }
     setAddress(null); setKind(null);
-    localStorage.setItem('mon-nest-wallet-disconnected', 'true');
-    localStorage.removeItem(LAST_WALLET);
+  }, [kind]);
+
+  const switchAccount = useCallback((account: string) => {
+    rememberTabAccount(account);
+    setAddress(getAddress(account)); setKind('injected');
   }, []);
 
   useEffect(() => {
@@ -71,15 +82,21 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           if (active && record?.address && record.rpId === rpId() && record.derivation === 'bip32-prf-v1') { setAddress(getAddress(record.address)); setKind('mera'); }
         } catch { /* Ignore invalid public metadata. */ }
       } else if (provider) {
-        const accounts = await provider.request({ method: 'eth_accounts' }) as string[];
-        if (active && accounts[0]) { setAddress(getAddress(accounts[0])); setKind('injected'); }
+        // Each tab restores only the browser-wallet account it signed in with; a new tab starts signed out.
+        const permitted = await provider.request({ method: 'eth_accounts' }) as string[];
+        const account = tabAccountFrom(permitted);
+        if (active) setAccounts(permitted);
+        if (active && account) { setAddress(getAddress(account)); setKind('injected'); }
       }
     };
     void restore().catch(() => {});
     const changed = (...args: unknown[]) => {
       if (localStorage.getItem(LAST_WALLET) === 'mera' || localStorage.getItem('mon-nest-wallet-disconnected') === 'true') return;
-      const accounts = args[0] as string[];
-      setAddress(accounts[0] ? getAddress(accounts[0]) : null); setKind(accounts[0] ? 'injected' : null);
+      // Keep this tab's account while the wallet still permits it, whichever account is selected there.
+      const permitted = args[0] as string[];
+      const account = tabAccountFrom(permitted);
+      setAccounts(permitted);
+      setAddress(account ? getAddress(account) : null); setKind(account ? 'injected' : null);
     };
     provider?.on?.('accountsChanged', changed);
     return () => { active = false; provider?.removeListener?.('accountsChanged', changed); session.current?.end(); };
@@ -115,10 +132,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setConnecting(true); setError('');
     try {
       if (!window.ethereum) throw new Error('Open this page in your wallet browser or install an Ethereum wallet.');
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' }) as string[];
-      if (!accounts[0]) throw new Error('No wallet account selected.');
+      // Always open the wallet's account chooser so each tab can sign in with a different account.
+      const account = await chooseAccount();
+      if (!account) throw new Error('No wallet account selected.');
+      rememberTabAccount(account);
+      setAccounts(await permittedAccounts());
       session.current?.end(); session.current = null;
-      setAddress(getAddress(accounts[0])); setKind('injected');
+      setAddress(getAddress(account)); setKind('injected');
       localStorage.setItem(LAST_WALLET, 'injected'); localStorage.removeItem('mon-nest-wallet-disconnected');
       setChooser(false); resolver.current?.(); resolver.current = null;
     } catch (cause) { setError((cause as Error).message || 'Wallet connection cancelled.'); }
@@ -137,18 +157,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }
     const provider = window.ethereum;
     if (!provider) throw new Error('Wallet is unavailable.');
-    const accounts = await provider.request({ method: 'eth_accounts' }) as string[];
-    if (accounts[0]?.toLowerCase() !== address.toLowerCase()) throw new Error('Wallet account changed. Review your account and try again.');
-    try { await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x279f' }] }); }
-    catch (cause) {
-      if ((cause as { code?: number }).code !== 4902) throw cause;
-      await provider.request({ method: 'wallet_addEthereumChain', params: [{ chainId: '0x279f', chainName: 'Monad Testnet', nativeCurrency: { name: 'MON', symbol: 'MON', decimals: 18 }, rpcUrls: ['https://testnet-rpc.monad.xyz'], blockExplorerUrls: ['https://testnet.monadvision.com'] }] });
-      await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x279f' }] });
-    }
-    return createWalletClient({ account: address, chain: monadTestnet, transport: custom(provider) }).sendTransaction(tx);
+    // Sign from this tab's account, which need not be the wallet's currently selected one.
+    const from = getAddress(await signerFor(address));
+    await ensureMonadTestnet();
+    return createWalletClient({ account: from, chain: monadTestnet, transport: custom(provider) }).sendTransaction(tx);
   }
 
-  return <Context.Provider value={{ address, kind, connecting, connect, disconnect, send }}>
+  return <Context.Provider value={{ address, kind, connecting, connect, disconnect, send, accounts, switchAccount }}>
     {children}
     {chooser && <div className="modal-backdrop" onClick={() => { if (!connecting) closeChooser(); }}>
       <section ref={dialog} className="account-dialog" role="dialog" aria-modal="true" aria-labelledby="account-heading" onClick={event => event.stopPropagation()}>

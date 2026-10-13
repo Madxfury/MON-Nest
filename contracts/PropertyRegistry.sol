@@ -5,6 +5,7 @@ import {AccessControl} from '@openzeppelin/contracts/access/AccessControl.sol';
 
 contract PropertyRegistry is AccessControl {
     bytes32 public constant VERIFIER_ROLE = keccak256('VERIFIER_ROLE');
+    uint256 public constant MAX_BATCH = 64;
 
     struct Property {
         address owner;
@@ -27,18 +28,30 @@ contract PropertyRegistry is AccessControl {
         _grantRole(VERIFIER_ROLE, admin);
     }
 
-    function register(bytes32 metadataHash, bytes32 ownershipProofHash) external returns (uint256 propertyId) {
+    function register(bytes32 metadataHash, bytes32 ownershipProofHash) public returns (uint256 propertyId) {
         require(metadataHash != bytes32(0) && ownershipProofHash != bytes32(0), 'Missing proof');
         propertyId = nextPropertyId++;
         properties[propertyId] = Property(msg.sender, metadataHash, ownershipProofHash, uint64(block.timestamp), false, true);
         emit PropertyRegistered(propertyId, msg.sender, metadataHash);
     }
 
-    function verify(uint256 propertyId) external onlyRole(VERIFIER_ROLE) {
+    function verify(uint256 propertyId) public onlyRole(VERIFIER_ROLE) {
         Property storage property = properties[propertyId];
         require(property.owner != address(0), 'Unknown property');
         property.verified = true;
         emit PropertyVerified(propertyId, msg.sender);
+    }
+
+    /// @notice Registers several properties for the caller in one transaction; ids are consecutive.
+    function registerMany(bytes32[] calldata metadataHashes, bytes32[] calldata ownershipProofHashes) external returns (uint256 firstPropertyId) {
+        require(metadataHashes.length == ownershipProofHashes.length && metadataHashes.length > 0 && metadataHashes.length <= MAX_BATCH, 'Invalid batch');
+        firstPropertyId = nextPropertyId;
+        for (uint256 i; i < metadataHashes.length; i++) register(metadataHashes[i], ownershipProofHashes[i]);
+    }
+
+    function verifyMany(uint256[] calldata propertyIds) external onlyRole(VERIFIER_ROLE) {
+        require(propertyIds.length > 0 && propertyIds.length <= MAX_BATCH, 'Invalid batch');
+        for (uint256 i; i < propertyIds.length; i++) verify(propertyIds[i]);
     }
 
     function setActive(uint256 propertyId, bool active) external {

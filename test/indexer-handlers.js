@@ -37,7 +37,7 @@ describe('Envio receipt-to-entity integration', function () {
     await time.increase(31 * 86400);
     await replay(bookings.connect(owner).book(4, broker.address));
     expect(stores.Booking.rows.size).to.equal(2);
-    expect(stores.Listing.rows.size).to.equal(5);
+    expect(stores.Listing.rows.size).to.equal(12);
     await replay(registry.connect(owner).register(ethers.id('listing'), ethers.id('ownership')));
     await replay(registry.verify(1));
     expect([...stores.Property.rows.values()][0].verified).to.equal(true);
@@ -49,7 +49,7 @@ describe('Envio receipt-to-entity integration', function () {
     await replay(escrow.connect(renter).openDispute(1, ethers.id('evidence')));
     await escrow.grantRole(await escrow.COURT_ROLE(), await court.getAddress());
     for (const juror of jurors.slice(0,3)) await replay(court.connect(juror).depositStake({ value: ethers.parseEther('1') }));
-    await replay(court.createCase(1, 100, jurors.slice(0,3).map(item => item.address)));
+    await replay(court.createCase(1, jurors.slice(0,3).map(item => item.address)));
     const salt = ethers.id('test-only-vote-salt');
     for (const juror of jurors.slice(0,3)) await replay(court.connect(juror).commitVote(1, ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['uint256','address','bool','bytes32'], [1,juror.address,false,salt]))));
     await time.increase(2 * 86400);
