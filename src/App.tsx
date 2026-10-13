@@ -27,7 +27,7 @@ function Dashboard({ address, onDisconnect }: { address: string; onDisconnect: (
   return <div className="dashboard-shell">
     <aside className={`dash-sidebar ${mobileNav ? 'open' : ''}`}>
       <div className="dash-brand"><Logo/><button onClick={() => setMobileNav(false)} aria-label="Close dashboard menu"><X/></button></div>
-      <div className="account-chip"><div className="account-avatar">SJ</div><div><strong>Shreejay</strong><span>{shorten(address)}</span></div><BadgeCheck size={17}/></div>
+      <div className="account-chip"><div className="account-avatar"><Wallet size={18}/></div><div><strong>Connected wallet</strong><span>{shorten(address)}</span></div><BadgeCheck size={17}/></div>
       <nav className="dash-nav" aria-label="Dashboard">
         {nav.map(item => <button key={item.label} className={tab === item.label ? 'active' : ''} onClick={() => { setTab(item.label); setMobileNav(false); }}><item.icon size={19}/>{item.label}{item.label === 'Disputes' && <span className="nav-count">1</span>}</button>)}
       </nav>
@@ -36,12 +36,12 @@ function Dashboard({ address, onDisconnect }: { address: string; onDisconnect: (
     </aside>
 
     <section className="dash-main">
-      <header className="dash-topbar"><button className="dash-menu" onClick={() => setMobileNav(true)}><Menu/></button><div><span>MON-Nest /</span><strong>{tab}</strong></div><div className="dash-tools"><button aria-label="Notifications"><Bell size={19}/><i/></button><div className="mini-avatar">SJ</div></div></header>
+      <header className="dash-topbar"><button className="dash-menu" onClick={() => setMobileNav(true)}><Menu/></button><div><span>MON-Nest /</span><strong>{tab}</strong></div><div className="dash-tools"><button aria-label="Notifications"><Bell size={19}/><i/></button><div className="mini-avatar" aria-label="Connected wallet"><Wallet size={16}/></div></div></header>
 
       <div className="dash-content">
         <TestPayment />
         {tab === 'Overview' && <>
-          <div className="dash-welcome"><div><span className="kicker">YOUR RENTAL</span><h1>Good evening, Shreejay.</h1><p>Everything is in order at Sea Glass Residence.</p></div><button className="quiet-button"><MessageCircle size={17}/>Message owner</button></div>
+          <div className="dash-welcome"><div><span className="kicker">YOUR RENTAL</span><h1>Welcome home.</h1><p>Everything is in order at Sea Glass Residence.</p></div><button className="quiet-button"><MessageCircle size={17}/>Message owner</button></div>
 
           <article className="next-action-card">
             <div className="next-date"><span>OCT</span><strong>19</strong></div>
