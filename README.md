@@ -94,7 +94,7 @@ This list is the source of truth for build status. Checkboxes should be updated 
 
 - [x] Add production metadata and social preview configuration.
 - [x] Make the repository directly deployable to Vercel.
-- [ ] Add deployed Vercel URL.
+- [x] Add deployed Vercel URL: https://monads-chi.vercel.app
 - [ ] Add testnet contract addresses and explorer links.
 - [ ] Record a 2–3 minute end-to-end demo.
 - [ ] Prepare architecture diagram, pitch deck, and judge test instructions.
