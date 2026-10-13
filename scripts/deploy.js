@@ -2,7 +2,13 @@ const { ethers } = require('hardhat');
 
 async function main() {
   const [deployer] = await ethers.getSigners();
+  const configuredBroker = process.env.BROKER_ADDRESS;
+  if (!configuredBroker || !ethers.isAddress(configuredBroker)) {
+    throw new Error('Set BROKER_ADDRESS to the broker wallet before deploying.');
+  }
+  const broker = ethers.getAddress(configuredBroker);
   console.log('Deploying MON-Nest contracts with:', deployer.address);
+  console.log('Broker payment recipient:', broker);
 
   const registry = await ethers.deployContract('PropertyRegistry', [deployer.address]);
   await registry.waitForDeployment();
@@ -12,6 +18,12 @@ async function main() {
   await escrow.waitForDeployment();
   const court = await ethers.deployContract('DisputeCourt', [deployer.address, await escrow.getAddress()]);
   await court.waitForDeployment();
+  const bookings = await ethers.deployContract('MonNestBookings', [deployer.address, broker]);
+  await bookings.waitForDeployment();
+
+  for (const listingId of [4, 45, 46, 47, 48]) {
+    await (await bookings.setListing(listingId, 0, 30 * 24 * 60 * 60, true)).wait();
+  }
 
   await (await escrow.grantRole(await escrow.COURT_ROLE(), await court.getAddress())).wait();
   await (await reputation.grantRole(await reputation.UPDATER_ROLE(), await court.getAddress())).wait();
@@ -21,6 +33,8 @@ async function main() {
     Reputation: await reputation.getAddress(),
     RentalEscrow: await escrow.getAddress(),
     DisputeCourt: await court.getAddress(),
+    MonNestBookings: await bookings.getAddress(),
+    Broker: broker,
   }, null, 2));
 }
 

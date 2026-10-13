@@ -1,5 +1,8 @@
 import '@nomicfoundation/hardhat-toolbox';
 import { HardhatUserConfig } from 'hardhat/config';
+import dotenv from 'dotenv';
+
+dotenv.config({ path: '.env.local', quiet: true });
 
 const config: HardhatUserConfig = {
   solidity: {

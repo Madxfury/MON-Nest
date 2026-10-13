@@ -5,6 +5,10 @@ export type Home = {
 
 export const homes: Home[] = [
   { id: 4, title: 'The Nest at Bandra', area: 'Bandra West', city: 'Mumbai', rent: 0, deposit: 0, beds: 1, baths: 1, size: 540, image: '/homes/hero-home.jpg', tags: ['Furnished', 'Complimentary'], trust: 0, complimentary: true },
+  { id: 45, title: 'Fernlight Studio', area: 'Baner', city: 'Pune', rent: 0, deposit: 0, beds: 1, baths: 1, size: 590, image: '/homes/terrace-loft.jpg', tags: ['Plant-filled', 'Complimentary'], trust: 0, complimentary: true },
+  { id: 46, title: 'The Red Chair Loft', area: 'Indiranagar', city: 'Bengaluru', rent: 0, deposit: 0, beds: 1, baths: 1, size: 690, image: '/homes/riverside-studio.jpg', tags: ['Work-ready', 'Complimentary'], trust: 0, complimentary: true },
+  { id: 47, title: 'The Outlook Residence', area: 'Powai', city: 'Mumbai', rent: 0, deposit: 0, beds: 2, baths: 2, size: 1180, image: '/homes/garden-residence.jpg', tags: ['Balcony', 'Complimentary'], trust: 0, complimentary: true },
+  { id: 48, title: 'Sunline House', area: 'Assagao', city: 'Goa', rent: 0, deposit: 0, beds: 3, baths: 2, size: 1480, image: '/homes/sunlit-apartment.jpg', tags: ['Open plan', 'Complimentary'], trust: 0, complimentary: true },
   { id: 1, title: 'Sea Glass Residence', area: 'Bandra West', city: 'Mumbai', rent: 42, deposit: 42, beds: 2, baths: 2, size: 1140, image: '/homes/sea-glass.jpg', tags: ['Sea view', 'Furnished'], trust: 96 },
   { id: 2, title: 'The Quiet Courtyard', area: 'Indiranagar', city: 'Bengaluru', rent: 29, deposit: 29, beds: 2, baths: 2, size: 980, image: '/homes/courtyard.jpg', tags: ['Pet friendly', 'Balcony'], trust: 93 },
   { id: 3, title: 'Palm House Studio', area: 'Assagao', city: 'Goa', rent: 21, deposit: 21, beds: 1, baths: 1, size: 610, image: '/homes/palm-house.jpg', tags: ['Work-ready', 'Garden'], trust: 98 },

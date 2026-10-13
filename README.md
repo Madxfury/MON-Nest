@@ -1,8 +1,8 @@
 # MON-Nest
 
-> Verified rentals. Protected payments. Fair outcomes — built on Monad.
+> A Monad Testnet rental marketplace prototype with public, onchain booking availability.
 
-MON-Nest is a consumer rental marketplace that replaces broker commissions and handshake trust with verified property records, programmable rent escrow, and community dispute resolution. It is designed for ordinary renters and owners: blockchain is the rail, not the product vocabulary.
+MON-Nest explores how a rental marketplace could combine clear home discovery with verifiable reservations, programmable rent escrow, and dispute resolution. The current web catalog is illustrative. The only homes intended for live booking are five complimentary testnet listings; other rental prices and terms are examples, not offers to rent real property.
 
 ## Hackathon position
 
@@ -33,79 +33,74 @@ The other tracks were reviewed deliberately:
 
 Cross-border AUSD and trading bounties are not targeted: forcing them into a rental escrow would dilute the core consumer story.
 
-## Product flow
+## How the testnet booking works
 
-1. An owner verifies identity and property control, then mints a non-transferable listing record containing a content hash of the terms and media.
-2. A renter signs clear terms and funds first rent, one-month deposit, and dispute reserve into a non-custodial escrow on Monad.
-3. Check-in evidence is hashed and time-stamped. Scheduled rent releases after the agreed confirmation window.
-4. Either party can open a dispute and reveal evidence to a randomly assigned, staked jury.
-5. The majority ruling settles escrow. Honest participation updates portable reputation and juror rewards.
+`MonNestBookings.sol` is a public availability ledger. The owner account configures each listing's price and duration, and the broker recipient is set at deployment. On `book(listingId)`, the contract checks that the home is active and not already rented, records the renter and expiry, and emits `HomeBooked`. The website reads that shared onchain state so every visitor sees the same availability. After the configured period ends, the listing becomes available to book again.
 
-The web experience uses mock rental data. Injected wallets can connect; without one, the dashboard uses a demo account. The **MON-Nest payment test** is a single 0 MON test product that sends a zero-value self-transfer on Monad Testnet, charging network gas only. It displays submission, confirmation, cancellation, and error states plus an explorer link. It does not create a rental or fund escrow. Other rental transactions remain unconnected to deployed contracts.
+The five complimentary catalog entries are IDs **4, 45, 46, 47, and 48**. The deployment script configures each at **0 MON for 30 days**. A successful booking has a 0 MON listing price; the wallet still pays Monad Testnet network gas. No rent is transferred to the broker for these zero-priced bookings. If an administrator later configures a positive testnet price, `book` requires the exact amount and sends it to the contract's broker address, never back to the renter. The broker wallet cannot book its own listings.
+
+| ID | Illustrative catalog home | Testnet price |
+| --- | --- | --- |
+| 4 | The Nest at Bandra | 0 MON |
+| 45 | Fernlight Studio | 0 MON |
+| 46 | The Red Chair Loft | 0 MON |
+| 47 | The Outlook Residence | 0 MON |
+| 48 | Sunline House | 0 MON |
+
+The listings and photos do **not** establish real property ownership or a legal tenancy. This booking contract does not hold a deposit or create a lease. The separate escrow, property registry, court, and reputation contracts are research prototypes that are not connected to a complete renter journey.
 
 ## Implementation checklist
 
-This list is the source of truth for build status. Checkboxes should be updated in the same pull request as each implementation.
+Update these checkboxes only when the corresponding implementation has been verified. Source code, a deployed contract, and a working production UI are separate milestones.
 
 ### Product and design
 
-- [x] Name and brand the product as **MON-Nest**.
-- [x] Build a responsive Next.js marketplace experience.
-- [x] Add authentic residential photography stored locally for reliable rendering.
-- [x] Add discovery filters, saved homes, real wallet connection, booking preview, and responsive navigation.
-- [x] Explain escrow, proof, and community resolution without requiring crypto knowledge.
-- [x] Label all prototype values and simulated actions honestly.
-- [x] Add a wallet-gated renter dashboard with rental, escrow, payment, activity, and dispute views.
-- [ ] Add owner listing creation and owner operations dashboard.
-- [ ] Add accessible form validation, empty/error states, and a guided first-use flow.
+- [x] Brand the product as MON-Nest and build a responsive Next.js catalog.
+- [x] Include 48 illustrative homes with locally stored residential images, search, city filters, and pagination.
+- [x] Connect an injected wallet, restore an already authorized account after refresh, and respond to account changes and explicit disconnect.
+- [x] Show a wallet-specific profile and locally saved homes.
+- [x] Record local browser viewing/saving history, labeled as local activity rather than verified property history.
+- [x] Add five complimentary homes as normal catalog listings.
+- [ ] Verify the booking UI against a deployed testnet contract: global availability, transaction pending/confirmed/failed states, explorer links, and the renter's booking in their profile.
+- [ ] Add owner-authorized listings, real availability, rental terms, and an owner operations interface.
+- [ ] Complete mobile and accessibility review of the booking journey.
 
 ### Monad contracts
 
-- [x] `PropertyRegistry.sol`: property attestation, metadata hash, status, and owner authorization.
-- [x] `RentalEscrow.sol`: agreement creation, native MON funding, milestone releases, disputes, and pull payments.
-- [x] `DisputeCourt.sol`: juror staking, commit/reveal voting, majority ruling, and locked stake.
-- [x] `Reputation.sol`: non-transferable role-specific scoring records.
-- [x] Add role-based access control, pausing, and reentrancy protection.
-- [x] Add contract unit tests covering registration, funding, release, invalid funding, and jury requirements.
-- [ ] Add ERC-20 funding, cancellation, unbiased juror selection, slashing, rewards, fuzz tests, and invariant tests.
-- [ ] Deploy contracts to the current Monad test network and record verified addresses below.
+- [x] Implement `MonNestBookings.sol` with one active booking per listing, a configured broker recipient, expiry, and events.
+- [x] Add a deployment script that configures complimentary IDs 4 and 45–48.
+- [x] Add unit tests for zero-price booking, shared availability, expiry, payout, and authorization.
+- [x] Write `PropertyRegistry.sol`, `RentalEscrow.sol`, `DisputeCourt.sol`, and `Reputation.sol` prototypes and basic unit tests.
+- [ ] Deploy `MonNestBookings` to Monad Testnet and record its verified address below.
+- [ ] Connect the deployed address to local and Vercel builds, then confirm two independent wallets see the same rented state.
+- [ ] Deploy and independently review the broader rental protocol before accepting rent or deposits.
+- [ ] Add ERC-20 funding, cancellation, unbiased juror selection, slashing, rewards, fuzz tests, and invariants to the broader protocol.
 
-### App integrations
+### Sponsor bounties and services
 
-- [ ] Replace the demo connector with **Mera** or **Dynamic** passkey onboarding.
-- [x] Add an injected-wallet connection with Monad Testnet switch request, account-change handling, and live wallet balance. No fake account fallback.
-- [ ] Add typed contract reads/writes and human-readable transaction review.
-- [ ] Add Envio indexing and event-driven home, escrow, dispute, and reputation views.
-- [ ] Store listing files and encrypted evidence offchain; put only content hashes and permissions onchain.
-- [ ] Add signed media manifests with capture time, perceptual hash, and EXIF availability; never treat EXIF alone as authenticity proof.
-- [ ] Add notifications for due rent, evidence windows, jury deadlines, and settlements.
-- [ ] Evaluate CRE and Aurora Intents only after the core escrow is safe.
+- [ ] Mera or Dynamic embedded/passkey wallet onboarding and transaction signing.
+- [ ] Envio indexing of booking, escrow, court, and reputation events.
+- [ ] Alchemy RPC or other sponsor-specific infrastructure integration, tested end to end.
+- [ ] Chainlink CRE workflow for deadlines and dispute escalation.
+- [ ] Aurora Intents cross-chain funding and execution.
+- [ ] Encrypted evidence storage, signed media manifests, notifications, and abuse handling.
 
-### Security, legal, and operations
+### Security and submission
 
-- [x] Write escrow state-machine and threat-model documents.
-- [ ] Use checks-effects-interactions, pull payments, replay protection, and bounded loops.
-- [ ] Add a multisig-controlled emergency pause and time-locked upgrades, or make contracts immutable.
-- [ ] Complete independent smart-contract review before holding real value.
-- [ ] Define evidence privacy, retention, appeals, and jurisdiction-specific rental compliance.
-- [ ] Add analytics, monitoring, rate limits, abuse reporting, and incident runbooks.
-
-### Demo and submission
-
-- [x] Add production metadata and social preview configuration.
-- [x] Make the repository directly deployable to Vercel.
-- [x] Add deployed Vercel URL: https://mon-nest.vercel.app
-- [ ] Add testnet contract addresses and explorer links.
-- [ ] Record a 2–3 minute end-to-end demo.
-- [ ] Prepare architecture diagram, pitch deck, and judge test instructions.
-- [ ] Run final mobile, accessibility, performance, and broken-link audits.
+- [x] Document the proposed escrow state machine and known threats in `docs/THREAT_MODEL.md`.
+- [x] Make the Next.js site deployable to Vercel and publish the existing site at https://mon-nest.vercel.app.
+- [ ] Verify the newly implemented booking flow on the public deployment.
+- [ ] Add contract source verification, testnet explorer links, and reproducible judge instructions.
+- [ ] Complete independent contract security review, legal review, and operational monitoring before a real-money launch.
+- [ ] Record an end-to-end demo and complete mobile, accessibility, performance, and broken-link audits.
 
 ## Tech stack
 
 - Next.js App Router + React + TypeScript
 - Plain CSS design system and Lucide icons
-- Planned: Solidity + Foundry, viem, Mera/Dynamic, Envio, content-addressed storage
-- Deployment: Vercel for the web app; Monad test network for contracts
+- Solidity 0.8.28, Hardhat, OpenZeppelin, and viem for contract development and testnet reads/writes
+- Vercel for the web app; Monad Testnet for the booking contract when deployed
+- Planned: Mera or Dynamic, Envio, evidence storage, and sponsor workflows
 
 ## Run locally
 
@@ -116,7 +111,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`.
+Open `http://localhost:3000`. To use the shared booking ledger, set `NEXT_PUBLIC_MON_NEST_BOOKINGS_ADDRESS` to a deployed `MonNestBookings` contract on Monad Testnet and `NEXT_PUBLIC_BROKER_ADDRESS` to the expected broker recipient in `.env.local`. The app pauses bookings if the deployed contract reports a different broker. Without valid addresses, the catalog remains browsable but live bookings are unavailable.
 
 Production verification:
 
@@ -125,15 +120,22 @@ npm run build
 npm start
 ```
 
-## Deploy to Vercel
+## Deploy and connect the booking contract
 
-1. Import `Madxfury/MON-Nest` in Vercel.
-2. Keep the detected framework preset as **Next.js**.
-3. Use the default build command (`next build`) and output settings.
-4. Add environment variables from `.env.example` when live integrations are implemented.
-5. Deploy. Pull requests receive preview deployments when Vercel Git integration is enabled.
+The booking deployer needs a Monad Testnet wallet with enough MON for gas, plus a **separate broker wallet**. Verify that you control the intended broker address before deploying. The broker is recorded onchain and can later be changed only by the contract owner. Do not put a private key in Git, a `NEXT_PUBLIC_*` variable, or the Vercel project. Hardhat loads deployment variables from the ignored `.env.local` file; shell environment variables also work.
 
-No `vercel.json` is required; Vercel's supported Next.js defaults are the safest deployment configuration.
+Set `DEPLOYER_PRIVATE_KEY` and `BROKER_ADDRESS` in `.env.local` on your computer, then run:
+
+```powershell
+npm install
+npm run contracts:compile
+npm run contracts:test
+npm run contracts:deploy:bookings:testnet
+```
+
+The script prints the `MonNestBookings` address, broker, and the five configured listing IDs. Check the address and transactions in the Monad Testnet explorer. Then set `NEXT_PUBLIC_MON_NEST_BOOKINGS_ADDRESS` and `NEXT_PUBLIC_BROKER_ADDRESS` in `.env.local` for local development and as **Production** environment variables in Vercel. Set `NEXT_PUBLIC_MONAD_RPC_URL` if using a different Monad Testnet RPC. Rebuild locally and redeploy Vercel because `NEXT_PUBLIC_*` values are embedded in the browser build. The application reads the onchain broker and checks it against the configured expected recipient before enabling bookings.
+
+For the web app, import `Madxfury/MON-Nest` in Vercel with the Next.js preset and default build settings. The current public domain is https://mon-nest.vercel.app. A new deployment must be checked at that domain before marking the booking UI live.
 
 ## Contract deployments
 
@@ -143,6 +145,7 @@ No `vercel.json` is required; Vercel's supported Next.js defaults are the safest
 | Monad test network | RentalEscrow | Not deployed |
 | Monad test network | DisputeCourt | Not deployed |
 | Monad test network | Reputation | Not deployed |
+| Monad Testnet | MonNestBookings | Not deployed |
 
 ## Image credits
 
@@ -150,4 +153,4 @@ The prototype uses real residential photography from [Unsplash](https://unsplash
 
 ## Important scope note
 
-MON-Nest is a hackathon prototype. The zero-value payment test is live wallet functionality; rental dashboards use illustrative data, and rental/payment/dispute/profile workspaces remain placeholders. The web app does not currently hold rental funds, verify ownership, provide legal tenancy agreements, or adjudicate real disputes. Those claims remain unchecked until the corresponding onchain and operational systems are implemented and verified.
+MON-Nest is a hackathon prototype. A local contract source file or a wallet transaction does not prove that a property was verified or leased. Until the booking contract is deployed and the public site is configured with its address, there is no shared onchain reservation state. The web app does not currently verify home ownership, hold rental deposits, create legal tenancy agreements, or adjudicate real disputes. Sponsor integrations are planned and remain unchecked until connected and exercised end to end.

@@ -8,6 +8,7 @@
     "start": "next start",
     "contracts:compile": "hardhat compile",
     "contracts:test": "hardhat test",
+    "contracts:deploy:bookings:testnet": "hardhat run scripts/deploy-bookings.js --network monadTestnet",
     "contracts:deploy:testnet": "hardhat run scripts/deploy.js --network monadTestnet"
   },
   "dependencies": {
@@ -23,6 +24,7 @@
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "dotenv": "^18.0.7",
     "hardhat": "^2.22.18",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3"

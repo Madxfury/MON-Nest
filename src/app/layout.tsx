@@ -3,11 +3,11 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'MON-Nest — Rent without the trust gap',
-  description: 'Verified rentals, protected payments, and community resolution on Monad.',
+  description: 'Explore homes and make verifiable 0 MON testnet bookings with shared availability on Monad.',
   metadataBase: new URL('https://mon-nest.vercel.app'),
   openGraph: {
     title: 'MON-Nest',
-    description: 'Verified rentals. Protected payments. Fair outcomes.',
+    description: 'Five 0 MON testnet booking homes with shared onchain availability.',
     images: ['/homes/hero-home.jpg'],
   },
 };
