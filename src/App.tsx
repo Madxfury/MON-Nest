@@ -35,28 +35,29 @@ function Dashboard({ address, onDisconnect }: { address: string; onDisconnect: (
     </aside>
 
     <section className="dash-main">
-      <header className="dash-topbar"><button className="dash-menu" onClick={() => setMobileNav(true)}><Menu/></button><div><span>MON-Nest /</span><strong>{tab}</strong></div><div className="dash-tools"><label><Search size={17}/><input placeholder="Search dashboard" /></label><button aria-label="Notifications"><Bell size={19}/><i/></button><div className="mini-avatar">SJ</div></div></header>
+      <header className="dash-topbar"><button className="dash-menu" onClick={() => setMobileNav(true)}><Menu/></button><div><span>MON-Nest /</span><strong>{tab}</strong></div><div className="dash-tools"><button aria-label="Notifications"><Bell size={19}/><i/></button><div className="mini-avatar">SJ</div></div></header>
 
       <div className="dash-content">
         {tab === 'Overview' && <>
-          <div className="dash-welcome"><div><span className="kicker">TUESDAY, 13 OCTOBER</span><h1>Welcome home, Shreejay.</h1><p>Your rental is healthy. The next rent release is scheduled in 6 days.</p></div><button className="primary-btn"><MessageCircle size={18}/>Contact owner</button></div>
+          <div className="dash-welcome"><div><span className="kicker">YOUR RENTAL</span><h1>Good evening, Shreejay.</h1><p>Everything is in order at Sea Glass Residence.</p></div><button className="quiet-button"><MessageCircle size={17}/>Message owner</button></div>
 
-          <div className="metric-grid">
-            <article><div className="metric-icon purple"><HomeIcon/></div><span>Active rentals</span><strong>1</strong><small><ArrowUpRight/>Verified agreement</small></article>
-            <article><div className="metric-icon lime"><ShieldCheck/></div><span>Protected in escrow</span><strong>84.00 <em>MON</em></strong><small><ArrowDownRight/>100% secured</small></article>
-            <article><div className="metric-icon sand"><CalendarDays/></div><span>Next payment</span><strong>42.00 <em>MON</em></strong><small><Clock3/>19 October 2026</small></article>
-            <article><div className="metric-icon rose"><Sparkles/></div><span>Trust score</span><strong>92<em>/100</em></strong><small><ArrowUpRight/>+4 this lease</small></article>
+          <article className="next-action-card">
+            <div className="next-date"><span>OCT</span><strong>19</strong></div>
+            <div className="next-copy"><span>NEXT ACTION</span><h2>October rent release</h2><p>42 MON is already protected in escrow. Confirm the release in 6 days.</p></div>
+            <div className="next-amount"><span>Protected amount</span><strong>42.00 MON</strong></div>
+            <button onClick={() => setTab('Payments')}>Review payment <ArrowRight size={16}/></button>
+          </article>
+
+          <div className="essential-stats">
+            <div><span>Protected in escrow</span><strong>84.00 MON</strong><small><ShieldCheck/> Rent + security deposit</small></div>
+            <div><span>Lease ends</span><strong>30 Sep 2027</strong><small><CalendarDays/> 336 days remaining</small></div>
+            <div><span>Agreement status</span><strong className="status-text"><i/> Active & verified</strong><small><FileCheck2/> Agreement #MN-2048</small></div>
           </div>
 
-          <div className="dash-grid">
-            <article className="panel rental-panel"><div className="panel-head"><div><span className="panel-kicker">CURRENT RENTAL</span><h2>Sea Glass Residence</h2></div><span className="active-badge"><i/> Active</span></div><div className="rental-summary"><img src="/homes/sea-glass.jpg" alt="Sea Glass Residence"/><div><p><MapPin size={14}/>Bandra West, Mumbai</p><div className="rental-details"><span><small>Agreement</small><strong>#MN-2048</strong></span><span><small>Lease ends</small><strong>30 Sep 2027</strong></span><span><small>Monthly rent</small><strong>42 MON</strong></span></div><div className="rental-progress"><div><span>Lease progress</span><strong>8%</strong></div><div className="progress-track"><i/></div><small>29 days completed · 336 remaining</small></div></div></div><div className="panel-actions"><button onClick={() => setTab('My rentals')}>View agreement <ArrowRight size={15}/></button><button><FileCheck2 size={15}/>Add check-in evidence</button></div></article>
+          <div className="overview-grid">
+            <article className="home-overview panel"><img src="/homes/sea-glass.jpg" alt="Sea Glass Residence"/><div className="home-overview-copy"><div><span className="panel-kicker">CURRENT HOME</span><h2>Sea Glass Residence</h2><p><MapPin size={14}/>Bandra West, Mumbai</p></div><dl><div><dt>Monthly rent</dt><dd>42 MON</dd></div><div><dt>Owner</dt><dd>0x49a…81c</dd></div><div><dt>Move-in</dt><dd>1 Oct 2026</dd></div></dl><button onClick={() => setTab('My rentals')}>View rental details <ArrowRight size={15}/></button></div></article>
 
-            <article className="panel escrow-panel"><div className="panel-head"><div><span className="panel-kicker">ESCROW HEALTH</span><h2>Funds protected</h2></div><ShieldCheck className="escrow-shield"/></div><div className="donut"><div><strong>84</strong><span>MON</span></div></div><div className="escrow-legend"><div><i className="rent-dot"/><span>October rent</span><strong>42 MON</strong></div><div><i className="deposit-dot"/><span>Security deposit</span><strong>42 MON</strong></div></div><div className="contract-row"><span>Contract</span><a href="https://testnet.monadvision.com" target="_blank" rel="noreferrer">0x8c1…a04 <ArrowUpRight size={13}/></a></div></article>
-          </div>
-
-          <div className="dash-grid lower">
-            <article className="panel activity-panel"><div className="panel-head"><div><span className="panel-kicker">ACTIVITY</span><h2>Recent updates</h2></div><button>View all</button></div><div className="activity-list"><div><i className="activity-check"><Check/></i><span><strong>Escrow funded</strong><small>84 MON secured for rental #MN-2048</small></span><time>2 Oct</time></div><div><i><FileCheck2/></i><span><strong>Agreement signed</strong><small>Both parties confirmed the rental terms</small></span><time>1 Oct</time></div><div><i><BadgeCheck/></i><span><strong>Owner verified</strong><small>Property control proof confirmed</small></span><time>30 Sep</time></div></div></article>
-            <article className="panel quick-panel"><div className="panel-head"><div><span className="panel-kicker">QUICK ACTIONS</span><h2>What do you need?</h2></div></div><div className="quick-grid"><button><ReceiptText/><span>Payment history</span><ArrowRight/></button><button><FileCheck2/><span>Upload evidence</span><ArrowRight/></button><button><Gavel/><span>Open a dispute</span><ArrowRight/></button><button><Heart/><span>Saved homes</span><ArrowRight/></button></div></article>
+            <article className="recent-panel panel"><div className="panel-head"><div><span className="panel-kicker">RECENT</span><h2>Activity</h2></div><button onClick={() => setTab('Payments')}>See all</button></div><div className="simple-activity"><div><i><Check/></i><span><strong>Escrow funded</strong><small>84 MON secured</small></span><time>2 Oct</time></div><div><i><FileCheck2/></i><span><strong>Agreement signed</strong><small>Confirmed by both parties</small></span><time>1 Oct</time></div><div><i><BadgeCheck/></i><span><strong>Owner verified</strong><small>Property proof confirmed</small></span><time>30 Sep</time></div></div></article>
           </div>
         </>}
 
