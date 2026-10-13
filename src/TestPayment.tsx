@@ -38,5 +38,5 @@ export default function TestPayment() {
     } finally { setBusy(false); }
   }
 
-  return <article className="panel test-payment"><div><span className="panel-kicker">TEST PRODUCT · MONAD TESTNET</span><h2>MON-Nest payment test</h2><p>0 MON price · 0 MON deposit · 0 MON platform fee</p><small>Send 0 MON to your own wallet. This tests a real transaction; it does not book a rental. You need a little testnet MON for gas.</small></div><button className="primary-btn" disabled={busy} onClick={pay}>{busy ? 'Processing…' : 'Pay 0 MON + gas'}</button><div role="status" aria-live="polite">{status}</div>{hash && <a href={`https://testnet.monadvision.com/tx/${hash}`} target="_blank" rel="noreferrer">View transaction ↗</a>}</article>;
+  return <div className="booking-payment"><button className="primary-btn full" disabled={busy} onClick={pay}>{busy ? 'Awaiting confirmation…' : 'Continue with wallet'}</button><small>Network gas applies. This illustrative listing sends a 0 MON transaction to your wallet; no lease or property reservation is created.</small><p role="status" aria-live="polite">{status}</p>{hash && <a href={`https://testnet.monadvision.com/tx/${hash}`} target="_blank" rel="noreferrer">View transaction ↗</a>}</div>;
 }
