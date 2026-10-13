@@ -1,11 +1,12 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { createPublicClient, formatEther, http, type Address } from 'viem';
+import { monadTestnet } from 'viem/chains';
 import { ArrowDownRight, ArrowRight, ArrowUpRight, BadgeCheck, BedDouble, Bell, Building2, CalendarDays, Check, ChevronDown, CircleDollarSign, Clock3, FileCheck2, Gavel, Heart, Home as HomeIcon, KeyRound, LayoutDashboard, LogOut, MapPin, Menu, MessageCircle, ReceiptText, Search, ShieldCheck, Sparkles, UserRound, Wallet, X } from 'lucide-react';
 import { homes, type Home, shorten } from './data';
 import TestPayment from './TestPayment';
 
-const demoWalletAddress = '0x7A81d44eC024f229b65071A60f9dD6f210b5e441';
 
 function Logo() {
   return <a className="logo" href="#top" aria-label="MON-Nest home"><span className="logo-mark">M</span><span>MON—NEST</span></a>;
@@ -16,54 +17,41 @@ type DashboardTab = 'Overview' | 'My rentals' | 'Payments' | 'Disputes' | 'Profi
 function Dashboard({ address, onDisconnect }: { address: string; onDisconnect: () => void }) {
   const [tab, setTab] = useState<DashboardTab>('Overview');
   const [mobileNav, setMobileNav] = useState(false);
-  const nav: { label: DashboardTab; icon: typeof LayoutDashboard }[] = [
-    { label: 'Overview', icon: LayoutDashboard },
-    { label: 'My rentals', icon: HomeIcon },
-    { label: 'Payments', icon: ReceiptText },
-    { label: 'Disputes', icon: Gavel },
-    { label: 'Profile', icon: UserRound },
+  const [balance, setBalance] = useState<string | null>(null);
+  const [balanceError, setBalanceError] = useState(false);
+  useEffect(() => {
+    let active = true;
+    setBalance(null); setBalanceError(false);
+    const client = createPublicClient({ chain: monadTestnet, transport: http() });
+    client.getBalance({ address: address as Address }).then(value => {
+      if (active) setBalance(Number(formatEther(value)).toLocaleString(undefined, { maximumFractionDigits: 6 }));
+    }).catch(() => { if (active) setBalanceError(true); });
+    return () => { active = false; };
+  }, [address]);
+  const nav = [
+    { label: 'Overview' as DashboardTab, icon: LayoutDashboard },
+    { label: 'My rentals' as DashboardTab, icon: HomeIcon },
+    { label: 'Payments' as DashboardTab, icon: ReceiptText },
+    { label: 'Disputes' as DashboardTab, icon: Gavel },
+    { label: 'Profile' as DashboardTab, icon: UserRound },
   ];
-
   return <div className="dashboard-shell">
     <aside className={`dash-sidebar ${mobileNav ? 'open' : ''}`}>
       <div className="dash-brand"><Logo/><button onClick={() => setMobileNav(false)} aria-label="Close dashboard menu"><X/></button></div>
-      <div className="account-chip"><div className="account-avatar"><Wallet size={18}/></div><div><strong>Connected wallet</strong><span>{shorten(address)}</span></div><BadgeCheck size={17}/></div>
-      <nav className="dash-nav" aria-label="Dashboard">
-        {nav.map(item => <button key={item.label} className={tab === item.label ? 'active' : ''} onClick={() => { setTab(item.label); setMobileNav(false); }}><item.icon size={19}/>{item.label}{item.label === 'Disputes' && <span className="nav-count">1</span>}</button>)}
-      </nav>
-      <div className="network-card"><span><i/> Monad Testnet</span><strong>Demo mode</strong><small>No real funds are connected</small></div>
+      <div className="account-chip"><div className="account-avatar"><Wallet size={18}/></div><div><strong>Connected wallet</strong><span>{shorten(address)}</span></div></div>
+      <nav className="dash-nav" aria-label="Dashboard">{nav.map(item => <button key={item.label} className={tab === item.label ? 'active' : ''} onClick={() => { setTab(item.label); setMobileNav(false); }}><item.icon size={19}/>{item.label}</button>)}</nav>
+      <div className="network-card"><span>Monad Testnet</span><strong>Your wallet account</strong><small>Rental contracts are not connected yet</small></div>
       <button className="disconnect" onClick={onDisconnect}><LogOut size={18}/>Disconnect wallet</button>
     </aside>
-
     <section className="dash-main">
-      <header className="dash-topbar"><button className="dash-menu" onClick={() => setMobileNav(true)}><Menu/></button><div><span>MON-Nest /</span><strong>{tab}</strong></div><div className="dash-tools"><button aria-label="Notifications"><Bell size={19}/><i/></button><div className="mini-avatar" aria-label="Connected wallet"><Wallet size={16}/></div></div></header>
-
+      <header className="dash-topbar"><button className="dash-menu" aria-label="Open dashboard menu" onClick={() => setMobileNav(true)}><Menu/></button><div><span>MON-Nest /</span><strong>{tab}</strong></div><span title={address}>{shorten(address)}</span></header>
       <div className="dash-content">
-        <TestPayment />
-        {tab === 'Overview' && <>
-          <div className="dash-welcome"><div><span className="kicker">YOUR RENTAL</span><h1>Welcome home.</h1><p>Everything is in order at Sea Glass Residence.</p></div><button className="quiet-button"><MessageCircle size={17}/>Message owner</button></div>
-
-          <article className="next-action-card">
-            <div className="next-date"><span>OCT</span><strong>19</strong></div>
-            <div className="next-copy"><span>NEXT ACTION</span><h2>October rent release</h2><p>42 MON is already protected in escrow. Confirm the release in 6 days.</p></div>
-            <div className="next-amount"><span>Protected amount</span><strong>42.00 MON</strong></div>
-            <button onClick={() => setTab('Payments')}>Review payment <ArrowRight size={16}/></button>
-          </article>
-
-          <div className="essential-stats">
-            <div><span>Protected in escrow</span><strong>84.00 MON</strong><small><ShieldCheck/> Rent + security deposit</small></div>
-            <div><span>Lease ends</span><strong>30 Sep 2027</strong><small><CalendarDays/> 336 days remaining</small></div>
-            <div><span>Agreement status</span><strong className="status-text"><i/> Active & verified</strong><small><FileCheck2/> Agreement #MN-2048</small></div>
-          </div>
-
-          <div className="overview-grid">
-            <article className="home-overview panel"><img src="/homes/sea-glass.jpg" alt="Sea Glass Residence"/><div className="home-overview-copy"><div><span className="panel-kicker">CURRENT HOME</span><h2>Sea Glass Residence</h2><p><MapPin size={14}/>Bandra West, Mumbai</p></div><dl><div><dt>Monthly rent</dt><dd>42 MON</dd></div><div><dt>Owner</dt><dd>0x49a…81c</dd></div><div><dt>Move-in</dt><dd>1 Oct 2026</dd></div></dl><button onClick={() => setTab('My rentals')}>View rental details <ArrowRight size={15}/></button></div></article>
-
-            <article className="recent-panel panel"><div className="panel-head"><div><span className="panel-kicker">RECENT</span><h2>Activity</h2></div><button onClick={() => setTab('Payments')}>See all</button></div><div className="simple-activity"><div><i><Check/></i><span><strong>Escrow funded</strong><small>84 MON secured</small></span><time>2 Oct</time></div><div><i><FileCheck2/></i><span><strong>Agreement signed</strong><small>Confirmed by both parties</small></span><time>1 Oct</time></div><div><i><BadgeCheck/></i><span><strong>Owner verified</strong><small>Property proof confirmed</small></span><time>30 Sep</time></div></div></article>
-          </div>
-        </>}
-
-        {tab !== 'Overview' && <div className="tab-page"><div className="tab-title"><span className="kicker">RENTER PORTAL</span><h1>{tab}</h1><p>{tab === 'My rentals' ? 'Your agreements, home records, lease timeline, and documents.' : tab === 'Payments' ? 'A transparent history of every escrow deposit and rent release.' : tab === 'Disputes' ? 'Review evidence windows and follow community resolution activity.' : 'Manage your portable rental identity and notification preferences.'}</p></div><div className="panel placeholder-panel"><div className="placeholder-icon">{tab === 'My rentals' ? <HomeIcon/> : tab === 'Payments' ? <ReceiptText/> : tab === 'Disputes' ? <Gavel/> : <UserRound/>}</div><h2>{tab} workspace</h2><p>This detailed workspace is prepared for the live Monad contracts and indexer. The current prototype does not create or alter onchain data.</p><button className="primary-btn" onClick={() => setTab('Overview')}>Return to overview</button></div></div>}
+        <div className="dash-welcome"><div><span className="kicker">YOUR ACCOUNT</span><h1>{tab === 'Overview' ? 'Welcome home.' : tab}</h1><p>Connected as {shorten(address)}</p></div></div>
+        {tab === 'Overview' && <><div className="essential-stats"><div><span>Wallet balance · Monad Testnet</span><strong>{balanceError ? 'Unavailable' : balance === null ? 'Loading…' : `${balance} MON`}</strong><small>Read directly from the network</small></div><div><span>Rental records</span><strong>Not connected</strong><small>No rental data provider configured</small></div><div><span>Escrow records</span><strong>Not connected</strong><small>No account funds assumed</small></div></div><TestPayment key={address}/></>}
+        {tab === 'Payments' && <TestPayment key={address}/>}
+        <article className="panel placeholder-panel">
+          {tab === 'Profile' ? <><h2>Your wallet</h2><p style={{ overflowWrap: 'anywhere' }}>{address}</p><p>Your identity comes from the wallet you connect. No personal profile has been created.</p></> : <><div className="placeholder-icon"><HomeIcon/></div><h2>{tab === 'Payments' ? 'No rental payment history available' : tab === 'Disputes' ? 'No dispute records available' : 'Your rental journey starts here'}</h2><p>Your wallet is connected. Rental agreements, escrow balances, and disputes will appear here once the deployed contracts and account data service are connected.</p><button className="primary-btn" onClick={onDisconnect}>Explore homes <ArrowRight size={16}/></button></>}
+        </article>
       </div>
     </section>
   </div>;
@@ -71,7 +59,22 @@ function Dashboard({ address, onDisconnect }: { address: string; onDisconnect: (
 
 function App() {
   const [connected, setConnected] = useState(false);
-  const [walletAccount, setWalletAccount] = useState(demoWalletAddress);
+  const [walletAccount, setWalletAccount] = useState('');
+  useEffect(() => {
+    const provider = window.ethereum;
+    const changed = (...args: unknown[]) => {
+      const accounts = args[0] as string[];
+      setWalletAccount(accounts[0] || '');
+      setConnected(Boolean(accounts[0]));
+    };
+    const disconnected = () => { setConnected(false); setWalletAccount(''); };
+    provider?.on?.('accountsChanged', changed);
+    provider?.on?.('disconnect', disconnected);
+    return () => {
+      provider?.removeListener?.('accountsChanged', changed);
+      provider?.removeListener?.('disconnect', disconnected);
+    };
+  }, []);
   const [menu, setMenu] = useState(false);
   const [saved, setSaved] = useState<number[]>([]);
   const [selected, setSelected] = useState<Home | null>(null);
@@ -96,10 +99,11 @@ function App() {
           setNotice('Wallet connected; switch to Monad Testnet to transact');
         }
       } else {
-        setWalletAccount(demoWalletAddress);
+        setNotice('Install an Ethereum-compatible wallet to connect your account.');
+        return;
       }
       setConnected(true);
-      setNotice(window.ethereum ? 'Wallet connected' : 'Demo wallet connected — install a wallet for live signing');
+      setNotice('Wallet connected');
       window.setTimeout(() => setNotice(''), 2600);
     } catch {
       setNotice('Wallet connection was cancelled');
@@ -109,7 +113,7 @@ function App() {
 
   const toggleSaved = (id: number) => setSaved(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
 
-  if (connected) return <Dashboard address={walletAccount} onDisconnect={() => setConnected(false)} />;
+  if (connected && walletAccount) return <Dashboard key={walletAccount} address={walletAccount} onDisconnect={() => { setConnected(false); setWalletAccount(''); }} />;
 
   return <div id="top">
     <header className="nav-wrap">
