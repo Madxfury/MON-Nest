@@ -80,6 +80,8 @@ function App() {
   const [selected, setSelected] = useState<Home | null>(null);
   const [city, setCity] = useState('All cities');
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  useEffect(() => { setPage(1); }, [city, search]);
   const [notice, setNotice] = useState('');
 
   const visibleHomes = useMemo(() => homes.filter(home =>
@@ -153,18 +155,20 @@ function App() {
 
       <section className="homes-section container" id="homes">
         <TestPayment />
-        <div className="section-head"><div><span className="kicker">CURATED & VERIFIED</span><h2>A better place to land.</h2></div><p>Every home carries an owner proof, property record, and transparent rental terms before you commit.</p></div>
+        <div className="section-head"><div><span className="kicker">EXPLORE THE COLLECTION</span><h2>A better place to land.</h2></div><p>Discover homes across eight cities. This illustrative catalog uses residential photography; owner verification and live availability are coming soon.</p></div>
         <div className="filters">
           <div className="search-box"><MapPin size={18}/><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by area or home" /></div>
-          <label className="select-wrap"><select value={city} onChange={e => setCity(e.target.value)}><option>All cities</option><option>Mumbai</option><option>Bengaluru</option><option>Goa</option></select><ChevronDown size={16}/></label>
-          <span className="result-count">{visibleHomes.length} verified homes</span>
+          <label className="select-wrap"><select aria-label="Filter by city" value={city} onChange={e => setCity(e.target.value)}><option>All cities</option>{[...new Set(homes.map(home => home.city))].sort().map(name => <option key={name}>{name}</option>)}</select><ChevronDown size={16}/></label>
+          <span className="result-count">{visibleHomes.length} homes</span>
         </div>
         <div className="home-grid">
-          {visibleHomes.map(home => <article className="home-card" key={home.id}>
-            <div className="home-image"><img src={home.image} alt={`${home.title} interior`} /><span className="trust-badge"><BadgeCheck size={15}/> {home.complimentary ? 'Complimentary' : `${home.trust}% trust`}</span><button className={`heart ${saved.includes(home.id) ? 'active' : ''}`} onClick={() => toggleSaved(home.id)} aria-label="Save home"><Heart size={19} fill={saved.includes(home.id) ? 'currentColor' : 'none'}/></button></div>
+          {visibleHomes.slice((page - 1) * 12, page * 12).map(home => <article className="home-card" key={home.id}>
+            <div className="home-image"><img loading="lazy" src={home.image} alt={`${home.title} illustrative interior`} /><span className="trust-badge">{home.complimentary ? 'Complimentary' : 'Featured home'}</span><button className={`heart ${saved.includes(home.id) ? 'active' : ''}`} onClick={() => toggleSaved(home.id)} aria-label={`Save ${home.title}`}><Heart size={19} fill={saved.includes(home.id) ? 'currentColor' : 'none'}/></button></div>
             <div className="home-content"><div className="home-location"><MapPin size={14}/>{home.area}, {home.city}</div><h3>{home.title}</h3><div className="home-meta"><span><BedDouble size={16}/>{home.beds} bed</span><span>{home.baths} bath</span><span>{home.size} ft²</span></div><div className="tags">{home.tags.map(t => <span key={t}>{t}</span>)}</div><div className="home-bottom"><div><strong>{home.rent} MON</strong><span>/ month</span></div><button onClick={() => setSelected(home)}>View & book <ArrowRight size={16}/></button></div></div>
           </article>)}
         </div>
+        {visibleHomes.length === 0 && <div className="panel placeholder-panel"><h3>No homes match your search</h3><p>Try a different neighborhood or choose all cities.</p><button className="primary-btn" onClick={() => { setSearch(''); setCity('All cities'); }}>Clear filters</button></div>}
+        {visibleHomes.length > 12 && <nav className="catalog-pagination" aria-label="Home listing pages"><button disabled={page === 1} onClick={() => setPage(page - 1)}>Previous</button><span>Page {page} of {Math.ceil(visibleHomes.length / 12)}</span><button disabled={page === Math.ceil(visibleHomes.length / 12)} onClick={() => setPage(page + 1)}>Next <ArrowRight size={15}/></button></nav>}
       </section>
 
       <section className="steps" id="how"><div className="container"><div className="section-head light"><div><span className="kicker">THE NEW RENTAL RAIL</span><h2>Keys, not complications.</h2></div><p>MON-Nest turns a handshake into a transparent, programmable agreement while keeping the experience human.</p></div><div className="step-grid">
