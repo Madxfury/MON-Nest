@@ -1,5 +1,6 @@
 import App from '../App';
+import { WalletProvider } from '../wallet/WalletProvider';
 
 export default function Home() {
-  return <App />;
+  return <WalletProvider><App /></WalletProvider>;
 }

@@ -1,0 +1,6 @@
+{
+  "name": "mon-nest-cre", "private": true, "type": "module",
+  "scripts": { "check": "tsc --noEmit" },
+  "dependencies": { "@chainlink/cre-sdk": "1.23.0", "viem": "^2.38.0" },
+  "devDependencies": { "typescript": "^5.7.3", "@types/node": "^24.0.0" }
+}

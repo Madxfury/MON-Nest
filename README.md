@@ -4,6 +4,8 @@
 
 MON-Nest explores how a rental marketplace could combine clear home discovery with verifiable reservations, programmable rent escrow, and dispute resolution. The current web catalog is illustrative. The only homes intended for live booking are five complimentary testnet listings; other rental prices and terms are examples, not offers to rent real property.
 
+**Selected account provider: Mera passkeys.** No Dynamic/Privy account layer is enabled. See [sponsor integration evidence and activation checklist](docs/SPONSOR_INTEGRATIONS.md) for implemented code, verified tests, and remaining live-service gates. A wallet-approved testnet deployment is still required; no private key needs to be shared with this application.
+
 ## Hackathon position
 
 **Primary track: Consumer Products & Payments**
@@ -25,8 +27,8 @@ The other tracks were reviewed deliberately:
 | --- | --- | --- |
 | High | Best Mera-Powered UX on Monad | Passkey-first account layer with no seed phrase, extension, or custody backend. |
 | High | Best Use of Envio | Index listings, escrow milestones, deposits, disputes, jury votes, and reputation into the product UI. |
-| High | Best Use of Dynamic | Embedded wallet onboarding and transaction signing. Use one account provider in the final build. |
-| Medium | Privy! | Alternative to Dynamic; beyond-login use would cover embedded wallets, funding, and policy-based signing. |
+| Alternative | Best Use of Dynamic | Evaluated, not integrated: Mera is the single selected account provider. |
+| Alternative | Privy! | Evaluated, not integrated: do not claim this bounty in the Mera build. |
 | Medium | Best Projects using Alchemy | Monad RPC, contract reads, simulation, and webhooks where supported. |
 | Stretch | Best workflow with CRE | Coordinate evidence deadlines, rent releases, and dispute escalation. |
 | Stretch | Bring Any-Chain Liquidity to Monad | Fund a MON/AUSD escrow from another chain through Aurora Intents. |
@@ -35,7 +37,7 @@ Cross-border AUSD and trading bounties are not targeted: forcing them into a ren
 
 ## How the testnet booking works
 
-`MonNestBookings.sol` is a public availability ledger. The owner account configures each listing's price and duration, and the broker recipient is set at deployment. On `book(listingId)`, the contract checks that the home is active and not already rented, records the renter and expiry, and emits `HomeBooked`. The website reads that shared onchain state so every visitor sees the same availability. After the configured period ends, the listing becomes available to book again.
+`MonNestBookings.sol` is a public availability ledger. The owner configures prices and durations; the constructor seeds five complimentary homes. On `book(listingId, expectedBroker)`, the contract verifies the reviewed broker, active availability and exact payment, records the renter and expiry, and emits `HomeBooked`. Every visitor reads the same onchain state. Expired bookings become available again, while past events remain in history.
 
 The five complimentary catalog entries are IDs **4, 45, 46, 47, and 48**. The deployment script configures each at **0 MON for 30 days**. A successful booking has a 0 MON listing price; the wallet still pays Monad Testnet network gas. No rent is transferred to the broker for these zero-priced bookings. If an administrator later configures a positive testnet price, `book` requires the exact amount and sends it to the contract's broker address, never back to the renter. The broker wallet cannot book its own listings.
 
@@ -78,11 +80,20 @@ Update these checkboxes only when the corresponding implementation has been veri
 
 ### Sponsor bounties and services
 
-- [ ] Mera or Dynamic embedded/passkey wallet onboarding and transaction signing.
-- [ ] Envio indexing of booking, escrow, court, and reputation events.
-- [ ] Alchemy RPC or other sponsor-specific infrastructure integration, tested end to end.
-- [ ] Chainlink CRE workflow for deadlines and dispute escalation.
-- [ ] Aurora Intents cross-chain funding and execution.
+- [x] Mera SDK passkey creation/recovery, deterministic account derivation, viem signing and session teardown.
+- [x] Synthetic Mera account recovery/signature/session-end tests (`npm run wallet:test`).
+- [ ] Real device passkey ceremony, refresh/recovery, gas funding and booking on the public domain.
+- [x] Envio schema, all protocol event handlers, code generation and typecheck.
+- [x] Replay actual local contract receipts through indexer handlers; verify history, escrow, votes and reputation.
+- [x] Consume Envio through a server-only GraphQL adapter and account UI, with RPC booking history fallback.
+- [ ] Host Envio, configure its endpoint, and verify live ingestion → GraphQL → production UI.
+- [x] Server-only RPC adapter, contract simulation, gas estimate review and signed transaction broadcast support.
+- [ ] Configure an Alchemy Monad Testnet URL and verify the sponsor service end to end.
+- [x] Real Chainlink CRE SDK workflow and authenticated onchain report receiver; local type/security tests.
+- [ ] Simulate, deploy and activate CRE using a trusted forwarder and account access.
+- [x] Escrow intermediary `fundFor` entry point and read-only Aurora network compatibility check.
+- [ ] Aurora Intents full cross-chain funding/execution (blocked: advertised Monad routes are mainnet 143, not testnet 10143).
+- [ ] AUSD/ERC-20 escrow support (native MON only today).
 - [ ] Encrypted evidence storage, signed media manifests, notifications, and abuse handling.
 
 ### Security and submission
@@ -100,31 +111,36 @@ Update these checkboxes only when the corresponding implementation has been veri
 - Plain CSS design system and Lucide icons
 - Solidity 0.8.28, Hardhat, OpenZeppelin, and viem for contract development and testnet reads/writes
 - Vercel for the web app; Monad Testnet for the booking contract when deployed
-- Planned: Mera or Dynamic, Envio, evidence storage, and sponsor workflows
+- Mera passkey accounts + viem signing; Envio HyperIndex handlers and GraphQL adapter
+- Chainlink CRE SDK workflow + authenticated Solidity receiver (live deployment pending)
 
 ## Run locally
 
-Requires Node.js 20.9 or newer.
+Requires Node.js 24 (Mera SDK requirement).
 
 ```bash
 npm install
-npm run dev
+npm run dev -- --port 3010
 ```
 
-Open `http://localhost:3000`. To use the shared booking ledger, set `NEXT_PUBLIC_MON_NEST_BOOKINGS_ADDRESS` to a deployed `MonNestBookings` contract on Monad Testnet and `NEXT_PUBLIC_BROKER_ADDRESS` to the expected broker recipient in `.env.local`. The app pauses bookings if the deployed contract reports a different broker. Without valid addresses, the catalog remains browsable but live bookings are unavailable.
+Open `http://localhost:3010`. Copy `.env.example` to ignored `.env.local` and configure the booking address, expected broker and deployment block after deployment. Unconfigured bookings are disabled, not simulated. Mera needs no hosted project ID. Alchemy/Envio settings are server-only; see [activation instructions](docs/SPONSOR_INTEGRATIONS.md). Localhost and production passkeys are separate accounts because they belong to different domains.
 
 Production verification:
 
 ```bash
 npm run build
-npm start
+npm start -- --port 3010
 ```
 
 ## Deploy and connect the booking contract
 
 The booking deployer needs a Monad Testnet wallet with enough MON for gas, plus a **separate broker wallet**. Verify that you control the intended broker address before deploying. The broker is recorded onchain and can later be changed only by the contract owner. Do not put a private key in Git, a `NEXT_PUBLIC_*` variable, or the Vercel project. Hardhat loads deployment variables from the ignored `.env.local` file; shell environment variables also work.
 
-Set `DEPLOYER_PRIVATE_KEY` and `BROKER_ADDRESS` in `.env.local` on your computer, then run:
+Use the browser-wallet flow below, or configure a private deployment key locally for the alternative CLI flow.
+
+**Recommended: browser-wallet deployment without a private-key file.** Run `npm run contracts:deploy:browser`, open `http://localhost:3011` in the Chrome profile with the confirmed MetaMask deployer, and review/approve the single deployment transaction. The local helper checks the receipt, owner, broker and all five listings, then shows the contract address and deployment block. It never reads wallet secrets. Deployment gas requires your explicit wallet approval. The helper currently expects the user-confirmed deployer `0x2733Bd3F25B762Afc860a4B34aC38E5B5D932563` and separate broker `0xc0aB4B8462792E0BeCE8D5e7d6e31CF4716c08CB`.
+
+The following alternative Hardhat flow needs a privately configured deployment key; do not paste it in chat or commit it:
 
 ```powershell
 npm install
@@ -133,7 +149,7 @@ npm run contracts:test
 npm run contracts:deploy:bookings:testnet
 ```
 
-The script prints the `MonNestBookings` address, broker, and the five configured listing IDs. Check the address and transactions in the Monad Testnet explorer. Then set `NEXT_PUBLIC_MON_NEST_BOOKINGS_ADDRESS` and `NEXT_PUBLIC_BROKER_ADDRESS` in `.env.local` for local development and as **Production** environment variables in Vercel. Set `NEXT_PUBLIC_MONAD_RPC_URL` if using a different Monad Testnet RPC. Rebuild locally and redeploy Vercel because `NEXT_PUBLIC_*` values are embedded in the browser build. The application reads the onchain broker and checks it against the configured expected recipient before enabling bookings.
+The script prints the `MonNestBookings` address, broker, and the five configured listing IDs. Check the address and transactions in the Monad Testnet explorer. Then set `NEXT_PUBLIC_MON_NEST_BOOKINGS_ADDRESS`, `NEXT_PUBLIC_BROKER_ADDRESS`, and `NEXT_PUBLIC_MON_NEST_BOOKINGS_DEPLOY_BLOCK` in `.env.local` for local development and as **Production** environment variables in Vercel. Use the decimal block number from the deployment receipt; a later block omits earlier bookings. Set `NEXT_PUBLIC_MONAD_RPC_URL` if using a different Monad Testnet RPC. Rebuild locally and redeploy Vercel because `NEXT_PUBLIC_*` values are embedded in the browser build. The application reads the onchain broker and checks it against the configured expected recipient before enabling bookings.
 
 For the web app, import `Madxfury/MON-Nest` in Vercel with the Next.js preset and default build settings. The current public domain is https://mon-nest.vercel.app. A new deployment must be checked at that domain before marking the booking UI live.
 
@@ -153,4 +169,4 @@ The prototype uses real residential photography from [Unsplash](https://unsplash
 
 ## Important scope note
 
-MON-Nest is a hackathon prototype. A local contract source file or a wallet transaction does not prove that a property was verified or leased. Until the booking contract is deployed and the public site is configured with its address, there is no shared onchain reservation state. The web app does not currently verify home ownership, hold rental deposits, create legal tenancy agreements, or adjudicate real disputes. Sponsor integrations are planned and remain unchecked until connected and exercised end to end.
+MON-Nest is a hackathon prototype, not a real-property marketplace or audited rental protocol. Until the booking contract is deployed and configured, shared reservations remain disabled. The web app does not verify actual home ownership, hold real rental deposits, create legal tenancy agreements, or adjudicate real disputes. Sponsor SDK code and local tests are distinguished from live service verification in the checklists above; incomplete live gates remain unchecked.

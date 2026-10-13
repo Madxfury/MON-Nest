@@ -1,0 +1,8 @@
+{
+  "name": "mon-nest-indexer",
+  "private": true,
+  "type": "module",
+  "scripts": { "codegen": "envio codegen", "dev": "node validate-config.mjs && envio dev", "check": "tsc --noEmit" },
+  "dependencies": { "envio": "3.14.0" },
+  "devDependencies": { "typescript": "^5.7.3", "@types/node": "^22.0.0" }
+}

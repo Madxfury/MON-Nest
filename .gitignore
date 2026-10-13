@@ -12,3 +12,12 @@ Thumbs.db
 /cache
 /typechain-types
 /coverage
+indexer/node_modules/
+indexer/.envio/
+indexer/generated/
+indexer/envio-env.d.ts
+integrations/**/node_modules/
+.local-tools/
+integrations/cre/config.staging.json
+integrations/cre/project.yaml
+integrations/cre/secrets.yaml

@@ -1,3 +1,11 @@
 .env
 .env.*
 !.env.example
+.local-tools/
+indexer/node_modules/
+indexer/.envio/
+indexer/generated/
+integrations/**/node_modules/
+artifacts/
+cache/
+typechain-types/

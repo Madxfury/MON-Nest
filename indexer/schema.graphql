@@ -1,0 +1,85 @@
+type Booking {
+  id: ID!
+  chainId: Int!
+  contract: String!
+  listingId: BigInt!
+  renter: String! @index
+  broker: String!
+  paidWei: BigInt!
+  bookedAt: Int!
+  expiresAt: Int!
+  txHash: String!
+  blockNumber: Int!
+  logIndex: Int!
+}
+type Listing {
+  id: ID!
+  listingId: BigInt!
+  priceWei: BigInt!
+  durationSeconds: BigInt!
+  active: Boolean!
+}
+type Property {
+  id: ID!
+  propertyId: BigInt!
+  owner: String!
+  metadataHash: String!
+  verified: Boolean!
+  active: Boolean!
+}
+type Agreement {
+  id: ID!
+  chainId: Int!
+  contract: String!
+  agreementId: BigInt!
+  propertyId: BigInt!
+  renter: String! @index
+  owner: String! @index
+  state: String!
+  fundedWei: BigInt!
+  releasedWei: BigInt!
+  evidenceRoot: String!
+  ownerAwardWei: BigInt!
+  renterAwardWei: BigInt!
+}
+type CourtCase {
+  id: ID!
+  caseId: BigInt!
+  agreementId: BigInt!
+  jurors: [String!]!
+  ownerVotes: Int!
+  renterVotes: Int!
+  finalized: Boolean!
+  ownerWins: Boolean!
+}
+type Vote {
+  id: ID!
+  caseId: BigInt!
+  juror: String! @index
+  committed: Boolean!
+  revealed: Boolean!
+  ownerWins: Boolean!
+}
+type ReputationScore {
+  id: ID!
+  chainId: Int!
+  contract: String!
+  account: String! @index
+  role: Int!
+  positive: Int!
+  negative: Int!
+  updatedAt: Int!
+}
+type Activity {
+  id: ID!
+  chainId: Int!
+  contract: String!
+  kind: String!
+  subjectId: String! @index
+  account: String! @index
+  amountWei: BigInt!
+  detail: String!
+  txHash: String!
+  blockNumber: Int!
+  timestamp: Int!
+}

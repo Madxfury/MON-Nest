@@ -27,12 +27,17 @@ contract MonNestBookings is Ownable, ReentrancyGuard {
 
     event BrokerChanged(address indexed previousBroker, address indexed newBroker);
     event ListingConfigured(uint256 indexed listingId, uint256 priceWei, uint64 durationSeconds, bool active);
-    event HomeBooked(uint256 indexed listingId, address indexed renter, address indexed broker, uint256 paidWei, uint64 expiresAt);
+    event HomeBooked(uint256 indexed listingId, address indexed renter, address indexed broker, uint256 paidWei, uint64 bookedAt, uint64 expiresAt);
 
     constructor(address admin, address payable initialBroker) Ownable(admin) {
         require(initialBroker != address(0), 'Broker required');
         broker = initialBroker;
         emit BrokerChanged(address(0), initialBroker);
+
+        uint256[5] memory complimentaryListingIds = [uint256(4), 45, 46, 47, 48];
+        for (uint256 i; i < complimentaryListingIds.length; i++) {
+            _setListing(complimentaryListingIds[i], 0, 30 days, true);
+        }
     }
 
     function setBroker(address payable newBroker) external onlyOwner {
@@ -43,6 +48,10 @@ contract MonNestBookings is Ownable, ReentrancyGuard {
     }
 
     function setListing(uint256 listingId, uint128 priceWei, uint64 durationSeconds, bool active) external onlyOwner {
+        _setListing(listingId, priceWei, durationSeconds, active);
+    }
+
+    function _setListing(uint256 listingId, uint128 priceWei, uint64 durationSeconds, bool active) internal {
         require(listingId != 0, 'Listing required');
         require(durationSeconds >= 1 days && durationSeconds <= 365 days, 'Invalid duration');
         listings[listingId] = Listing(priceWei, durationSeconds, active);
@@ -53,10 +62,11 @@ contract MonNestBookings is Ownable, ReentrancyGuard {
         return bookings[listingId].expiresAt > block.timestamp;
     }
 
-    function book(uint256 listingId) external payable nonReentrant {
+    function book(uint256 listingId, address expectedBroker) external payable nonReentrant {
         Listing memory listing = listings[listingId];
         require(listing.active, 'Listing unavailable');
         require(!isRented(listingId), 'Already rented');
+        require(expectedBroker == broker, 'Broker changed');
         require(msg.sender != broker, 'Broker cannot rent');
         require(msg.value == listing.priceWei, 'Wrong payment');
 
@@ -68,6 +78,6 @@ contract MonNestBookings is Ownable, ReentrancyGuard {
             (bool sent,) = broker.call{value: msg.value}('');
             require(sent, 'Broker payment failed');
         }
-        emit HomeBooked(listingId, msg.sender, broker, msg.value, expiresAt);
+        emit HomeBooked(listingId, msg.sender, broker, msg.value, bookedAt, expiresAt);
     }
 }

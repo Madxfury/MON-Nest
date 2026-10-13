@@ -1,0 +1,9 @@
+{
+  "schedule": "0 */5 * * * *",
+  "chainName": "monad-testnet",
+  "chainId": 10143,
+  "escrow": "REPLACE_WITH_DEPLOYED_RENTAL_ESCROW",
+  "receiver": "REPLACE_WITH_DEPLOYED_RENTAL_AUTOMATION",
+  "gasLimit": "500000",
+  "agreementIds": []
+}

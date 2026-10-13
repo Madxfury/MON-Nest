@@ -7,17 +7,16 @@ async function main() {
   }
 
   const [deployer] = await ethers.getSigners();
+  if (!deployer) throw new Error('Set DEPLOYER_PRIVATE_KEY to a funded Monad Testnet deployer wallet.');
   const broker = ethers.getAddress(configuredBroker);
   const bookings = await ethers.deployContract('MonNestBookings', [deployer.address, broker]);
   await bookings.waitForDeployment();
-
-  for (const listingId of [4, 45, 46, 47, 48]) {
-    await (await bookings.setListing(listingId, 0, 30 * 24 * 60 * 60, true)).wait();
-  }
+  const contractAddress = await bookings.getAddress();
+  console.log(`MonNestBookings deployed on ${network.name} at ${contractAddress}`);
 
   console.log(JSON.stringify({
     network: network.name,
-    contract: await bookings.getAddress(),
+    contract: contractAddress,
     broker,
     zeroMonListingIds: [4, 45, 46, 47, 48],
   }, null, 2));

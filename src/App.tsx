@@ -6,42 +6,80 @@ import { monadTestnet } from 'viem/chains';
 import { ArrowDownRight, ArrowRight, ArrowUpRight, BadgeCheck, BedDouble, Bell, Building2, CalendarDays, Check, ChevronDown, CircleDollarSign, Clock3, FileCheck2, Gavel, Heart, Home as HomeIcon, KeyRound, LayoutDashboard, LogOut, MapPin, Menu, MessageCircle, ReceiptText, Search, ShieldCheck, Sparkles, UserRound, Wallet, X } from 'lucide-react';
 import { homes, type Home, shorten } from './data';
 import TestPayment from './TestPayment';
-import { bookingsAbi, bookingsAddress, bookingsClient, expectedBrokerAddress, readBooking, type BookingSnapshot } from './bookings';
+import { useWallet } from './wallet/WalletProvider';
+import IndexedAccount from './IndexedAccount';
+import { bookingsAbi, bookingsAddress, bookingsClient, bookingsDeployBlock, expectedBrokerAddress, readBooking, readBookingHistory, type BookingHistoryEvent, type BookingSnapshot } from './bookings';
 
 
-function Logo() {
-  return <a className="logo" href="#top" aria-label="MON-Nest home"><span className="logo-mark">M</span><span>MON—NEST</span></a>;
+function Logo({ onHome }: { onHome?: () => void }) {
+  return <a className="logo" href="#top" aria-label="MON-Nest home" onClick={onHome ? event => { event.preventDefault(); onHome(); } : undefined}><span className="logo-mark">M</span><span>MON—NEST</span></a>;
 }
 
-function Profile({ address, saved, bookings, availability, onHome, onDisconnect }: { address: string; saved: number[]; bookings: Record<number, BookingSnapshot>; availability: 'loading' | 'ready' | 'error' | 'unconfigured'; onHome: () => void; onDisconnect: () => void }) {
+function Profile({ address, saved, bookings, bookingHistory, historyStatus, availability, onHome, onDisconnect }: { address: string; saved: number[]; bookings: Record<number, BookingSnapshot>; bookingHistory: Record<number, BookingHistoryEvent[]>; historyStatus: Record<number, 'loading' | 'ready' | 'error'>; availability: 'loading' | 'ready' | 'error' | 'unconfigured'; onHome: () => void; onDisconnect: () => void }) {
+  const { kind } = useWallet();
   const [balance, setBalance] = useState<string | null>(null);
   useEffect(() => {
     let active = true;
     setBalance(null);
-    createPublicClient({ chain: monadTestnet, transport: http() }).getBalance({ address: address as Address })
+    const loadBalance = () => bookingsClient.getBalance({ address: address as Address })
       .then(value => { if (active) setBalance(Number(formatEther(value)).toLocaleString(undefined, { maximumFractionDigits: 6 })); })
       .catch(() => { if (active) setBalance('Unavailable'); });
-    return () => { active = false; };
+    void loadBalance();
+    const timer = window.setInterval(loadBalance, 20_000);
+    window.addEventListener('focus', loadBalance);
+    return () => { active = false; window.clearInterval(timer); window.removeEventListener('focus', loadBalance); };
   }, [address]);
   const [copied, setCopied] = useState(false);
-  const userRentals = homes.filter(home => home.complimentary && bookings[home.id]?.renter.toLowerCase() === address.toLowerCase());
+  const userRentals = homes.filter(home => home.complimentary).flatMap<{ home: Home; bookedAt: number; expiresAt: number; txHash: Hash | null; active: boolean }>(home => {
+    const current = bookings[home.id];
+    const events = bookingHistory[home.id] || [];
+    if (events.length) return events.filter(event => event.renter.toLowerCase() === address.toLowerCase()).map(event => ({
+      home, bookedAt: event.bookedAt, expiresAt: event.expiresAt, txHash: event.txHash,
+      active: Boolean(current?.rented && current.renter.toLowerCase() === address.toLowerCase() && current.bookedAt === event.bookedAt),
+    }));
+    return current?.bookedAt && current.renter.toLowerCase() === address.toLowerCase() ? [{ home, bookedAt: current.bookedAt, expiresAt: current.expiresAt, txHash: null, active: current.rented }] : [];
+  }).sort((a, b) => b.bookedAt - a.bookedAt);
+  const loadingPastBookings = homes.some(home => home.complimentary && historyStatus[home.id] === 'loading');
   return <div>
-    <header className="nav-wrap"><nav className="nav container"><Logo/><button className="wallet-btn" onClick={onHome}>Explore homes <ArrowRight size={16}/></button></nav></header>
+    <header className="nav-wrap"><nav className="nav container"><Logo onHome={onHome}/><button className="wallet-btn" onClick={onHome}>Explore homes <ArrowRight size={16}/></button></nav></header>
     <main className="profile-page container">
       <div className="dash-welcome"><div><span className="kicker">YOUR ACCOUNT</span><h1>Profile</h1><p>Your wallet, testnet bookings, and saved homes in one place.</p></div><div className="account-avatar"><Wallet size={20}/></div></div>
-      <section className="panel profile-wallet"><h2>Wallet</h2><p className="wallet-address">{address}</p><div className="profile-wallet-actions"><button className="quiet-button" onClick={async () => { try { await navigator.clipboard.writeText(address); setCopied(true); } catch { setCopied(false); } }}>{copied ? 'Copied' : 'Copy address'}</button><a className="quiet-button" target="_blank" rel="noreferrer" href={`https://testnet.monadvision.com/address/${address}`}>View on explorer <ArrowUpRight size={15}/></a></div><dl className="profile-facts"><div><dt>Network balance</dt><dd>{balance === null ? 'Loading…' : balance === 'Unavailable' ? balance : `${balance} MON`}</dd></div><div><dt>Network</dt><dd>Monad Testnet</dd></div></dl><button className="quiet-button" onClick={onDisconnect}><LogOut size={16}/>Disconnect wallet</button></section>
-      <section className="profile-saved"><div className="section-head"><div><span className="kicker">ON MONAD TESTNET</span><h2>Your bookings</h2></div></div>{availability === 'ready' && userRentals.length ? <div className="profile-bookings">{userRentals.map(home => <article className="profile-booking panel" key={home.id}><img src={home.image} alt={home.title}/><div><span className={`rental-pill ${bookings[home.id].rented ? 'active' : ''}`}>{bookings[home.id].rented ? 'Rented' : 'Ended'}</span><h3>{home.title}</h3><p>{home.area}, {home.city}</p><small>Booked {new Date(bookings[home.id].bookedAt * 1000).toLocaleDateString(undefined, { dateStyle: 'medium' })} · Until {new Date(bookings[home.id].expiresAt * 1000).toLocaleDateString(undefined, { dateStyle: 'medium' })}</small></div><a href={bookingsAddress ? `https://testnet.monadvision.com/address/${bookingsAddress}` : '#homes'} target="_blank" rel="noreferrer">View onchain ↗</a></article>)}</div> : <div className="panel"><h3>{availability === 'loading' ? 'Checking bookings…' : availability === 'error' ? 'Booking records are temporarily unavailable' : 'No bookings for this wallet yet'}</h3><p>{availability === 'unconfigured' ? 'Onchain bookings will appear here when the booking contract is live.' : 'Book one of the 0 MON testnet homes to see its record here.'}</p><button className="primary-btn" onClick={onHome}>Explore homes <ArrowRight size={16}/></button></div>}</section>
+      <section className="panel profile-wallet">
+        <h2>{kind === 'mera' ? 'Your passkey account' : 'Your wallet'}</h2>
+        <p className="wallet-address">{address}</p>
+        <div className="profile-wallet-actions">
+          <button className="quiet-button" onClick={async () => { try { await navigator.clipboard.writeText(address); setCopied(true); } catch { setCopied(false); } }}>{copied ? 'Copied' : 'Copy address'}</button>
+          <a className="quiet-button" target="_blank" rel="noreferrer" href={`https://testnet.monadvision.com/address/${address}`}>View on explorer <ArrowUpRight size={15}/></a>
+          <a className="quiet-button" target="_blank" rel="noreferrer" href="https://faucet.monad.xyz">Get testnet gas <ArrowUpRight size={15}/></a>
+        </div>
+        <dl className="profile-facts"><div><dt>Network balance</dt><dd>{balance === null ? 'Loading…' : balance === 'Unavailable' ? balance : `${balance} MON`}</dd></div><div><dt>Network</dt><dd>Monad Testnet</dd></div></dl>
+        <button className="quiet-button" onClick={onDisconnect}><LogOut size={16}/>Disconnect account</button>
+      </section>
+      <section className="profile-saved"><div className="section-head"><div><span className="kicker">ON MONAD TESTNET</span><h2>Your bookings</h2></div></div>{userRentals.length ? <div className="profile-bookings">{userRentals.map(rental => <article className="profile-booking panel" key={`${rental.home.id}:${rental.bookedAt}`}><img src={rental.home.image} alt={rental.home.title}/><div><span className={`rental-pill ${rental.active ? 'active' : ''}`}>{rental.active ? 'Rented' : 'Ended'}</span><h3>{rental.home.title}</h3><p>{rental.home.area}, {rental.home.city}</p><small>Booked {new Date(rental.bookedAt * 1000).toLocaleDateString(undefined, { dateStyle: 'medium' })} · Until {new Date(rental.expiresAt * 1000).toLocaleDateString(undefined, { dateStyle: 'medium' })}</small></div><a href={`https://testnet.monadvision.com/${rental.txHash ? `tx/${rental.txHash}` : `address/${bookingsAddress}`}`} target="_blank" rel="noreferrer">View receipt ↗</a></article>)}</div> : <div className="panel"><h3>{availability === 'loading' || loadingPastBookings ? 'Checking bookings…' : availability === 'error' ? 'Booking records are temporarily unavailable' : 'No bookings for this wallet yet'}</h3><p>{availability === 'unconfigured' ? 'Onchain bookings will appear here when the booking contract is live.' : 'Book one of the 0 MON testnet homes to see its record here.'}</p><button className="primary-btn" onClick={onHome}>Explore homes <ArrowRight size={16}/></button></div>}</section>
       <section className="profile-saved"><div className="section-head"><div><span className="kicker">YOUR SHORTLIST</span><h2>Saved homes</h2></div></div>{saved.length ? <div className="home-grid">{homes.filter(home => saved.includes(home.id)).map(home => <article className="home-card" key={home.id}><div className="home-image"><img loading="lazy" src={home.image} alt={home.title}/></div><div className="home-content"><div className="home-location">{home.area}, {home.city}</div><h3>{home.title}</h3><div className="home-bottom"><strong>{home.rent} MON / month</strong><button onClick={onHome}>Explore <ArrowRight size={15}/></button></div></div></article>)}</div> : <div className="panel"><h3>No saved homes yet</h3><p>Tap the heart on a home to add it to your shortlist.</p><button className="primary-btn" onClick={onHome}>Explore homes <ArrowRight size={16}/></button></div>}</section>
+      <IndexedAccount address={address}/>
     </main>
   </div>;
 }
 
 function App() {
-  const [connected, setConnected] = useState(false);
+  const wallet = useWallet();
+  const walletAccount = wallet.address || '';
+  const connected = Boolean(wallet.address);
+  const connecting = wallet.connecting;
   const [showProfile, setShowProfile] = useState(false);
-  const [walletAccount, setWalletAccount] = useState('');
-  const [connecting, setConnecting] = useState(false);
   const [bookings, setBookings] = useState<Record<number, BookingSnapshot>>({});
+  const [bookingHistory, setBookingHistory] = useState<Record<number, BookingHistoryEvent[]>>({});
+  const [historyStatus, setHistoryStatus] = useState<Record<number, 'loading' | 'ready' | 'error'>>({});
+  const refreshHistory = useCallback(async (listingId: number) => {
+    if (!bookingsAddress || bookingsDeployBlock === null) return;
+    setHistoryStatus(current => ({ ...current, [listingId]: 'loading' }));
+    try {
+      const events = await readBookingHistory(listingId);
+      setBookingHistory(current => ({ ...current, [listingId]: events }));
+      setHistoryStatus(current => ({ ...current, [listingId]: 'ready' }));
+    } catch { setHistoryStatus(current => ({ ...current, [listingId]: 'error' })); }
+  }, []);
   const [availability, setAvailability] = useState<'loading' | 'ready' | 'error' | 'unconfigured'>(bookingsAddress && expectedBrokerAddress ? 'loading' : 'unconfigured');
   const refreshBookings = useCallback(async () => {
     if (!bookingsAddress || !expectedBrokerAddress) { setAvailability('unconfigured'); return; }
@@ -65,36 +103,6 @@ function App() {
     return () => { window.clearInterval(interval); window.removeEventListener('focus', onFocus); };
   }, [refreshBookings]);
   useEffect(() => {
-    const provider = window.ethereum;
-    let active = true;
-    let accountEventReceived = false;
-    const acceptAccounts = (accounts: string[]) => {
-      if (!active) return;
-      setWalletAccount(accounts[0] || '');
-      setConnected(Boolean(accounts[0]));
-      if (!accounts[0]) setShowProfile(false);
-    };
-    if (provider && localStorage.getItem('mon-nest-wallet-disconnected') !== 'true') {
-      // Read previously authorized accounts without opening a wallet permission prompt.
-      provider.request({ method: 'eth_accounts' }).then(accounts => {
-        if (!accountEventReceived) acceptAccounts(accounts as string[]);
-      }).catch(() => {});
-    }
-    const changed = (...args: unknown[]) => {
-      accountEventReceived = true;
-      const accounts = args[0] as string[];
-      if (localStorage.getItem('mon-nest-wallet-disconnected') !== 'true') acceptAccounts(accounts);
-    };
-    const disconnected = () => { setConnected(false); setWalletAccount(''); };
-    provider?.on?.('accountsChanged', changed);
-    provider?.on?.('disconnect', disconnected);
-    return () => {
-      active = false;
-      provider?.removeListener?.('accountsChanged', changed);
-      provider?.removeListener?.('disconnect', disconnected);
-    };
-  }, []);
-  useEffect(() => {
     const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') { setSelected(null); setMenu(false); } };
     window.addEventListener('keydown', escape);
     return () => window.removeEventListener('keydown', escape);
@@ -106,6 +114,12 @@ function App() {
     try { setSaved(JSON.parse(localStorage.getItem(`mon-nest-saved:${walletAccount.toLowerCase()}`) || '[]')); } catch { setSaved([]); }
   }, [walletAccount]);
   const [selected, setSelected] = useState<Home | null>(null);
+  useEffect(() => {
+    if (selected?.complimentary) void refreshHistory(selected.id);
+  }, [selected?.id, refreshHistory]);
+  useEffect(() => {
+    if (showProfile && walletAccount) homes.filter(home => home.complimentary).forEach(home => { void refreshHistory(home.id); });
+  }, [showProfile, walletAccount, refreshHistory]);
   const modalCloseRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (!selected) return;
@@ -114,6 +128,7 @@ function App() {
     document.body.style.overflow = 'hidden';
     modalCloseRef.current?.focus();
     const keepFocusInside = (event: KeyboardEvent) => {
+      if (document.querySelector('.account-dialog')) return;
       if (event.key !== 'Tab') return;
       const dialog = modalCloseRef.current?.closest('[role="dialog"]');
       const controls = Array.from(dialog?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input, select, textarea') || []);
@@ -131,16 +146,26 @@ function App() {
   const [page, setPage] = useState(1);
   useEffect(() => { setPage(1); }, [city, search]);
   const [notice, setNotice] = useState('');
-  const [homeHistory, setHomeHistory] = useState<{ homeId: number; action: string; at: string }[]>([]);
+  useEffect(() => { if (!notice) return; const timer = window.setTimeout(() => setNotice(''), 5_000); return () => window.clearTimeout(timer); }, [notice]);
+  type HomeHistoryEntry = { homeId: number; action: string; at: string };
+  const historyStorageKey = walletAccount ? `mon-nest-home-history:${walletAccount.toLowerCase()}` : 'mon-nest-home-history';
+  const [storedHomeHistory, setStoredHomeHistory] = useState<{ key: string; events: HomeHistoryEntry[] }>({ key: '', events: [] });
+  const homeHistory = storedHomeHistory.key === historyStorageKey ? storedHomeHistory.events : [];
   useEffect(() => {
-    try { setHomeHistory(JSON.parse(localStorage.getItem('mon-nest-home-history') || '[]')); } catch { setHomeHistory([]); }
-  }, []);
+    try {
+      const parsed = JSON.parse(localStorage.getItem(historyStorageKey) || '[]');
+      setStoredHomeHistory({ key: historyStorageKey, events: Array.isArray(parsed) ? parsed : [] });
+    } catch { setStoredHomeHistory({ key: historyStorageKey, events: [] }); }
+  }, [historyStorageKey]);
   const recordHomeHistory = (homeId: number, action: string) => {
-    setHomeHistory(current => {
-      const next = [{ homeId, action, at: new Date().toISOString() }, ...current].slice(0, 200);
-      localStorage.setItem('mon-nest-home-history', JSON.stringify(next));
-      return next;
-    });
+    let previous: HomeHistoryEntry[] = [];
+    try {
+      const parsed = JSON.parse(localStorage.getItem(historyStorageKey) || '[]');
+      if (Array.isArray(parsed)) previous = parsed;
+    } catch { /* Ignore invalid browser-only history. */ }
+    const next = [{ homeId, action, at: new Date().toISOString() }, ...previous].slice(0, 200);
+    localStorage.setItem(historyStorageKey, JSON.stringify(next));
+    setStoredHomeHistory({ key: historyStorageKey, events: next });
   };
 
   const visibleHomes = useMemo(() => homes.filter(home =>
@@ -149,27 +174,7 @@ function App() {
   ), [city, search]);
 
   const connect = async () => {
-    if (connecting) return;
-    setConnecting(true);
-    try {
-      if (window.ethereum) {
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' }) as string[];
-        if (!accounts[0]) return;
-        setWalletAccount(accounts[0]);
-        localStorage.removeItem('mon-nest-wallet-disconnected');
-      } else {
-        setNotice('Install an Ethereum-compatible wallet to connect your account.');
-        return;
-      }
-      setConnected(true);
-      setNotice('Wallet connected');
-      window.setTimeout(() => setNotice(''), 2600);
-    } catch {
-      setNotice('Wallet connection was cancelled');
-      window.setTimeout(() => setNotice(''), 2600);
-    } finally {
-      setConnecting(false);
-    }
+    await wallet.connect();
   };
 
   const toggleSaved = (id: number) => {
@@ -182,7 +187,7 @@ function App() {
     });
   };
 
-  if (connected && walletAccount && showProfile) return <Profile key={walletAccount} address={walletAccount} saved={saved} bookings={bookings} availability={availability} onHome={() => { setShowProfile(false); window.setTimeout(() => document.getElementById('homes')?.scrollIntoView({ behavior: 'smooth' }), 0); }} onDisconnect={() => { localStorage.setItem('mon-nest-wallet-disconnected', 'true'); setConnected(false); setWalletAccount(''); setShowProfile(false); }} />;
+  if (connected && walletAccount && showProfile) return <Profile key={walletAccount} address={walletAccount} saved={saved} bookings={bookings} bookingHistory={bookingHistory} historyStatus={historyStatus} availability={availability} onHome={() => { setShowProfile(false); window.setTimeout(() => document.getElementById('homes')?.scrollIntoView({ behavior: 'smooth' }), 0); }} onDisconnect={() => { wallet.disconnect(); setShowProfile(false); }} />;
 
   return <div id="top">
     <header className="nav-wrap">
@@ -195,7 +200,7 @@ function App() {
           <a href="#jury" onClick={() => setMenu(false)}>Roadmap</a>
           <a href="#architecture" onClick={() => setMenu(false)}>Architecture</a>
         </div>
-        <button className="wallet-btn" disabled={connecting} aria-busy={connecting} onClick={connected ? () => setShowProfile(true) : connect}><Wallet size={17} />{connected ? `Profile · ${shorten(walletAccount)}` : connecting ? 'Connecting…' : 'Connect wallet'}</button>
+        <button className="wallet-btn" disabled={connecting} aria-busy={connecting} onClick={connected ? () => setShowProfile(true) : connect}><Wallet size={17} />{connected ? `Profile · ${shorten(walletAccount)}` : connecting ? 'Connecting…' : 'Connect account'}</button>
         <button className="menu-btn" onClick={() => setMenu(!menu)} aria-label="Toggle menu">{menu ? <X /> : <Menu />}</button>
       </nav>
     </header>
@@ -224,7 +229,7 @@ function App() {
       <section className="homes-section container" id="homes">
         <div className="section-head"><div><span className="kicker">EXPLORE THE COLLECTION</span><h2>A better place to land.</h2></div><p>Explore homes across eight cities. Five illustrative homes support 0 MON testnet bookings; the rest are previews.</p></div>
         <div className="filters">
-          <div className="search-box"><MapPin size={18}/><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by area or home" /></div>
+          <div className="search-box"><MapPin size={18}/><input aria-label="Search homes by area or name" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by area or home" /></div>
           <label className="select-wrap"><select aria-label="Filter by city" value={city} onChange={e => setCity(e.target.value)}><option>All cities</option>{[...new Set(homes.map(home => home.city))].sort().map(name => <option key={name}>{name}</option>)}</select><ChevronDown size={16}/></label>
           <span className="result-count">{visibleHomes.length} homes</span>
         </div>
@@ -254,23 +259,22 @@ function App() {
       <section className="build-section container" id="architecture">
         <div className="section-head"><div><span className="kicker">UNDER THE HOOD</span><h2>Built for trust.<br/>Designed for everyday renting.</h2></div><p>Consumer Products & Payments is our primary track. Here’s where Monad is used today and where sponsor services fit into the rental journey.</p></div>
         <div className="architecture-flow">
-          <article><span>01 · EXPERIENCE</span><h3>Find & connect</h3><p>Next.js serves the catalog and wallet-specific profile. Your wallet supplies your address; balance comes directly from Monad Testnet.</p><small>Implemented</small></article>
+          <article><span>01 · EXPERIENCE</span><h3>Find & connect</h3><p>Next.js serves the catalog and account profile. Mera derives a signing account from a passkey; existing wallets can also connect. No server stores your signing key.</p><small>Mera SDK integrated</small></article>
           <article><span>02 · TRANSACTIONS</span><h3>Book & verify</h3><p>Five 0 MON homes use a booking contract to prevent duplicate active reservations and expose shared status. The app waits for a receipt before confirming.</p><small>{bookingsAddress ? 'Contract configured' : 'Contract deployment pending'}</small></article>
           <article><span>03 · RENTAL PROTOCOL</span><h3>Protect & resolve</h3><p>Separate Solidity contracts cover property verification, native MON escrow, staked jury voting, and reputation. These are locally tested and not connected to live rentals.</p><small>Written & locally tested</small></article>
-          <article><span>04 · ACCOUNT RECORDS</span><h3>Read & verify</h3><p>An indexer will turn contract events into rental and payment histories. Evidence belongs in encrypted offchain storage with content hashes recorded onchain.</p><small>Planned integration</small></article>
+          <article><span>04 · ACCOUNT RECORDS</span><h3>Read & verify</h3><p>Envio handlers turn booking, escrow, dispute, vote, and reputation events into account records. Booking history also reads chain logs when indexing is unavailable.</p><small>Indexer implemented · hosting pending</small></article>
         </div>
-        <div className="sponsor-heading"><div><span className="kicker">SPONSOR BOUNTIES</span><h3>Integration status, openly.</h3></div><p>No sponsor bounty integration is completed yet. These are the selected implementation targets; using Monad and a regular wallet alone does not qualify.</p></div>
+        <div className="sponsor-heading"><div><span className="kicker">SPONSOR BOUNTIES</span><h3>What powers the experience.</h3></div><p>Mera is our chosen account layer. Infrastructure integrations below distinguish implemented code from live service verification; these are not claims of awarded bounties.</p></div>
         <div className="sponsor-grid">
           {[
-            { name: 'Mera', bounty: 'Best Mera-Powered UX on Monad', use: 'Replace extension-wallet onboarding with a passkey account layer for renters and owners.', needs: 'Mera account integration and transaction signing' },
-            { name: 'Dynamic', bounty: 'Best Use of Dynamic', use: 'Alternative account provider for embedded wallets, authentication, and rental transaction signing.', needs: 'Environment ID and deployed SDK flow' },
-            { name: 'Envio', bounty: 'Best Use of Envio', use: 'Index property registration, funded escrows, rent releases, and court events into each wallet’s dashboard.', needs: 'Deployed contracts, handlers, and hosted indexer' },
-            { name: 'Alchemy', bounty: 'Best Projects using Alchemy', use: 'Provide application RPC and transaction data access for Monad contract reads and writes.', needs: 'Configured Alchemy service used by the app' },
-            { name: 'Chainlink CRE', bounty: 'Best workflow with CRE', use: 'Orchestrate rental deadlines and dispute escalation through a verifiable workflow.', needs: 'A built and simulated CRE workflow' },
-            { name: 'Aurora Intents', bounty: 'Bring Any-Chain Liquidity to Monad', use: 'Allow tenants to fund rental escrow from assets held on another chain.', needs: 'A working cross-chain deposit-and-execute flow' },
-          ].map(sponsor => <article key={sponsor.name}><div className="sponsor-title"><h3>{sponsor.name}</h3><span>Planned</span></div><strong>{sponsor.bounty}</strong><p>{sponsor.use}</p><small>Completion requires: {sponsor.needs}.</small></article>)}
+            { name: 'Mera', status: 'SDK integrated', bounty: 'Best Mera-Powered UX on Monad', use: 'Passkey creation, account recovery, and viem transaction signing without a seed phrase or custody backend.', needs: 'Verify a real passkey ceremony and funded booking on this domain' },
+            { name: 'Envio', status: 'Code verified', bounty: 'Best Use of Envio', use: 'Typed event handlers and GraphQL-backed account history for listings, deposits, rent releases, disputes, votes, and reputation.', needs: 'Deployed contracts and a running Envio endpoint' },
+            { name: 'Alchemy', status: 'Adapter ready', bounty: 'Best Projects using Alchemy', use: 'A server-only RPC adapter serves balance reads, transaction simulation, gas estimates, and signed transaction broadcasts.', needs: 'An Alchemy Monad Testnet RPC URL; public Monad RPC is the current fallback' },
+            { name: 'Chainlink CRE', status: 'Locally tested', bounty: 'Best workflow with CRE', use: 'A scheduled CRE workflow reads finalized escrow state and sends authenticated reports for rent releases and evidence deadlines.', needs: 'CRE simulation, deployment access, and a trusted testnet forwarder' },
+            { name: 'Aurora Intents', status: 'Network blocked', bounty: 'Bring Any-Chain Liquidity to Monad', use: 'The escrow includes a fundFor entry point for intermediary funding. Aurora’s checked Monad routes are mainnet, not our testnet.', needs: 'A confirmed chain 10143 funding route before bridging is enabled' },
+          ].map(sponsor => <article key={sponsor.name}><div className="sponsor-title"><h3>{sponsor.name}</h3><span>{sponsor.status}</span></div><strong>{sponsor.bounty}</strong><p>{sponsor.use}</p><small>Live verification needs: {sponsor.needs}.</small></article>)}
         </div>
-        <div className="architecture-note"><FileCheck2 size={20}/><p>Mera and Dynamic are alternative account-layer approaches; the final provider is not selected. Sponsor services above are not currently powering the app.</p><a href="https://github.com/Madxfury/MON-Nest#implementation-checklist" target="_blank" rel="noreferrer">Follow the build <ArrowUpRight size={16}/></a></div>
+        <div className="architecture-note"><FileCheck2 size={20}/><p>One account provider: Mera. Dynamic and Privy were evaluated as alternatives and are not enabled or claimed in this build. No real-money rentals or cross-chain deposits are accepted.</p><a href="https://github.com/Madxfury/MON-Nest#implementation-checklist" target="_blank" rel="noreferrer">Inspect the evidence <ArrowUpRight size={16}/></a></div>
       </section>
 
       <section className="cta container"><div><span className="kicker">TRY THE BOOKING FLOW</span><h2>Explore a home.<br/>See its status.</h2></div><div><p>Choose one of five 0 MON testnet homes and review the booking details before connecting a wallet.</p><a href="#homes" className="primary-btn">Find your nest <ArrowRight size={18}/></a></div></section>
@@ -287,8 +291,12 @@ function App() {
           <h2 id="listing-title">{selected.title}</h2>
           <p><MapPin size={16}/>{selected.area}, {selected.city}</p>
           <div className="price-box"><div><span>{selected.complimentary ? '30-day booking' : 'Illustrative monthly rent'}</span><strong>{selected.rent} MON</strong></div><div><span>Deposit</span><strong>{selected.deposit} MON</strong></div><div><span>Platform fee</span><strong>{(selected.rent * .02).toFixed(2)} MON</strong></div></div>
-          {selected.complimentary ? <TestPayment key={selected.id} home={selected} booking={bookings[selected.id] || null} availability={availability} walletAccount={walletAccount} onConnect={connect} onRefresh={refreshBookings} onBooked={async (homeId: number, _hash: Hash) => { recordHomeHistory(homeId, 'Booked on Monad Testnet'); await refreshBookings(); }}/> : <p className="booking-state">This is a preview home. Online booking is not enabled for it.</p>}
-          <section className="property-history" aria-label="Property history"><h3>Home history</h3>{selected.complimentary && availability === 'ready' && bookings[selected.id]?.bookedAt ? <p>Latest testnet booking: {new Date(bookings[selected.id].bookedAt * 1000).toLocaleDateString(undefined, { dateStyle: 'medium' })} by {shorten(bookings[selected.id].renter)}. {bookings[selected.id].rented ? 'Currently rented.' : 'Booking ended.'}</p> : <p>No verified ownership, tenancy, or maintenance records are available for this listing.</p>}<h4>Your recent activity</h4><small>Saved in this browser; only contract bookings are shared publicly.</small><ol>{homeHistory.filter(event => event.homeId === selected.id).slice(0, 8).map((event, index) => <li key={event.at + index}><strong>{event.action}</strong><time dateTime={event.at}>{new Date(event.at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</time></li>)}</ol></section>
+          {selected.complimentary ? <TestPayment key={selected.id} home={selected} booking={bookings[selected.id] || null} availability={availability} walletAccount={walletAccount} onConnect={connect} onRefresh={refreshBookings} onBooked={async (homeId: number, _hash: Hash) => { recordHomeHistory(homeId, 'Booked on Monad Testnet'); await Promise.all([refreshBookings(), refreshHistory(homeId)]); }}/> : <p className="booking-state">This is a preview home. Online booking is not enabled for it.</p>}
+          <section className="property-history" aria-label="Property history">
+            <h3>Home history</h3>
+            {!selected.complimentary ? <p>This preview home has no connected onchain listing or verified property history.</p> : !bookingsAddress ? <p>Booking history will be available after the testnet contract is deployed.</p> : historyStatus[selected.id] === 'loading' ? <p>Loading onchain booking history…</p> : historyStatus[selected.id] === 'error' ? <p>Full history is unavailable. Current availability is shown above; the indexer may need to catch up.</p> : bookingHistory[selected.id]?.length ? <ol>{[...bookingHistory[selected.id]].reverse().map(event => <li key={event.txHash + event.logIndex}><div><strong>Booked by {shorten(event.renter)}</strong><time dateTime={new Date(event.bookedAt * 1000).toISOString()}>{new Date(event.bookedAt * 1000).toLocaleDateString()} · Until {new Date(event.expiresAt * 1000).toLocaleDateString()}</time></div><a href={`https://testnet.monadvision.com/tx/${event.txHash}`} target="_blank" rel="noreferrer">Receipt ↗</a></li>)}</ol> : availability === 'ready' && bookings[selected.id]?.bookedAt ? <p>Latest testnet booking: {new Date(bookings[selected.id].bookedAt * 1000).toLocaleDateString(undefined, { dateStyle: 'medium' })} by {shorten(bookings[selected.id].renter)}. {bookings[selected.id].rented ? 'Currently rented.' : 'Booking ended.'}</p> : historyStatus[selected.id] === 'ready' ? <p>No onchain bookings are recorded for this home yet.</p> : <p>Onchain history has not been verified yet.</p>}
+            <h4>{walletAccount ? 'Your recent activity' : 'Browser activity'}</h4><small>Saved in this browser; contract bookings are shared publicly.</small><ol>{homeHistory.filter(event => event.homeId === selected.id).slice(0, 8).map((event, index) => <li key={event.at + index}><strong>{event.action}</strong><time dateTime={event.at}>{new Date(event.at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</time></li>)}</ol>
+          </section>
         </div>
       </div>
     </div>}

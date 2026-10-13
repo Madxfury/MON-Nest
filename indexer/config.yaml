@@ -1,0 +1,50 @@
+# yaml-language-server: $schema=./node_modules/envio/evm.schema.json
+name: mon-nest
+description: Rental listings, bookings, escrow, court and reputation on Monad Testnet
+field_selection:
+  transaction_fields:
+    - hash
+contracts:
+  - name: Bookings
+    events:
+      - event: ListingConfigured(uint256 indexed listingId, uint256 priceWei, uint64 durationSeconds, bool active)
+      - event: HomeBooked(uint256 indexed listingId, address indexed renter, address indexed broker, uint256 paidWei, uint64 bookedAt, uint64 expiresAt)
+  - name: PropertyRegistry
+    events:
+      - event: PropertyRegistered(uint256 indexed propertyId, address indexed owner, bytes32 metadataHash)
+      - event: PropertyVerified(uint256 indexed propertyId, address indexed verifier)
+      - event: PropertyStatusChanged(uint256 indexed propertyId, bool active)
+  - name: RentalEscrow
+    events:
+      - event: AgreementCreated(uint256 indexed agreementId, uint256 indexed propertyId, address indexed renter, address owner)
+      - event: AgreementFunded(uint256 indexed agreementId, uint256 amount)
+      - event: RentReleased(uint256 indexed agreementId, uint256 amount)
+      - event: DisputeOpened(uint256 indexed agreementId, bytes32 evidenceRoot)
+      - event: AgreementResolved(uint256 indexed agreementId, uint256 ownerAmount, uint256 renterAmount)
+      - event: Withdrawal(address indexed account, uint256 amount)
+  - name: DisputeCourt
+    events:
+      - event: JurorStaked(address indexed juror, uint256 amount)
+      - event: CaseCreated(uint256 indexed caseId, uint256 indexed agreementId, address[] jurors)
+      - event: VoteCommitted(uint256 indexed caseId, address indexed juror)
+      - event: VoteRevealed(uint256 indexed caseId, address indexed juror, bool ownerWins)
+      - event: CaseFinalized(uint256 indexed caseId, bool ownerWins)
+  - name: Reputation
+    events:
+      - event: ReputationUpdated(address indexed account, uint8 indexed role, bool positive, bytes32 indexed reason)
+chains:
+  - id: 10143
+    start_block: 0
+    rpc: https://testnet-rpc.monad.xyz
+    contracts:
+      # Addresses are deliberately empty. Run scripts/configure-indexer.js after deployment.
+      - name: Bookings
+        address: []
+      - name: PropertyRegistry
+        address: []
+      - name: RentalEscrow
+        address: []
+      - name: DisputeCourt
+        address: []
+      - name: Reputation
+        address: []

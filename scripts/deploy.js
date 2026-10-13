@@ -21,10 +21,6 @@ async function main() {
   const bookings = await ethers.deployContract('MonNestBookings', [deployer.address, broker]);
   await bookings.waitForDeployment();
 
-  for (const listingId of [4, 45, 46, 47, 48]) {
-    await (await bookings.setListing(listingId, 0, 30 * 24 * 60 * 60, true)).wait();
-  }
-
   await (await escrow.grantRole(await escrow.COURT_ROLE(), await court.getAddress())).wait();
   await (await reputation.grantRole(await reputation.UPDATER_ROLE(), await court.getAddress())).wait();
 

@@ -26,7 +26,7 @@ describe('MON-Nest protocol', function () {
     await registry.connect(owner).register(ethers.id('metadata'), ethers.id('proof'));
     await registry.verify(1);
     const now = await time.latest();
-    await escrow.connect(renter).createAgreement(1, owner.address, ethers.parseEther('1'), ethers.parseEther('1'), now, now + 31 * 86400, ethers.id('terms'));
+    await escrow.connect(renter).createAgreement(1, owner.address, ethers.parseEther('1'), ethers.parseEther('1'), now, now + 30 * 86400, ethers.id('terms'));
     await escrow.connect(renter).fund(1, { value: ethers.parseEther('2') });
     await escrow.releaseRent(1);
     expect(await escrow.claimable(owner.address)).to.equal(ethers.parseEther('1'));

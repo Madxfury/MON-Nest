@@ -18,7 +18,11 @@
 | Duplicate jurors | Duplicate-address rejection | Sybil-resistant identity provider |
 | Admin key compromise | Narrow role-based permissions | Multisig, timelock and key rotation |
 | Stuck funds | Pull withdrawals and court resolution | Cancellation/expiry paths and emergency recovery design |
-| Malicious frontend | Human-readable transaction review is planned | Verified deployments, CSP and reproducible builds |
+| Malicious frontend | Transaction destination, amount and estimated gas are reviewed before signing | Verified deployments, CSP and reproducible builds |
+| Pooled escrow drain | Per-agreement remaining balance, one rent release, exact dispute allocation | Property-based and invariant testing, audit |
+| Forged CRE report | Immutable forwarder/workflow, destination/chain binding, freshness and replay checks | Confirm real forwarder and DON configuration |
+| Wrong-chain bridge | Aurora deposits disabled while chain 10143 is unsupported | Sponsor-confirmed testnet route and receipt verification |
+| Passkey secret exposure | PRF-derived account, memory-only signing session, temporary key wipe | Client security review, passkey-loss recovery policy, CSP |
 | Privacy leakage | Only hashes belong onchain | Formal evidence access and retention policy |
 
 ## Escrow state machine
@@ -29,7 +33,7 @@ Created -> Funded -> Active -> Completed
 Created -----------------------> Cancelled (planned)
 ```
 
-Only the renter funds an agreement. Scheduled rent becomes claimable to the owner rather than being pushed. Either rental party may open a dispute. Only the authorized court may resolve a disputed agreement.
+The renter can fund directly; an intermediary can also use `fundFor` to fund an existing agreement without changing its parties or refund recipients. The prototype accepts one funded month, tracks each agreement's balance separately, and permits one rent release. Scheduled rent becomes claimable to the owner rather than being pushed. Either party can dispute; only the authorized court can allocate exactly that agreement's remaining balance. Normal expiry/cancellation and full renter operations still need implementation before this broader protocol is launched.
 
 ## Known limitations
 
