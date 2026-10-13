@@ -5,6 +5,8 @@ const Module = require('node:module');
 const ts = require('typescript');
 const React = require('react');
 const { renderToStaticMarkup } = require('react-dom/server');
+// Load the local client component for server-render checks without a bundler.
+require.extensions['.tsx'] = (loaded, file) => loaded._compile(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, jsx: ts.JsxEmit.ReactJSX } }).outputText, file);
 const filename = path.resolve('src/SponsorIntegrations.tsx');
 const compiled = ts.transpileModule(fs.readFileSync(filename, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, jsx: ts.JsxEmit.ReactJSX } }).outputText;
 const componentModule = new Module(filename, module);
@@ -23,4 +25,7 @@ assert.doesNotMatch(connected, /Adapter ready|Live verification needs|public Mon
 assert.match(unconfigured, /Not configured/);
 assert.doesNotMatch(unconfigured, /RPC connected/);
 assert.match(connected, /No mainnet bridge or deposit is enabled/);
+assert.match(connected, /Checking route/);
+assert.match(connected, /1313161555/);
+assert.match(connected, /Check again|Checking…/);
 console.log('Sponsor UI: connected/fallback states, verified APIs, and pending integrations passed.');

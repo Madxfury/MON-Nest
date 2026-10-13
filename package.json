@@ -14,6 +14,7 @@
     "indexer:configure": "node scripts/configure-indexer.js",
     "envio:check": "node scripts/check-envio.mjs",
     "aurora:check": "node integrations/aurora/check-network.mjs",
+    "aurora:test": "node scripts/test-aurora.cjs",
     "contracts:deploy:bookings:testnet": "hardhat run scripts/deploy-bookings.js --network monadTestnet",
     "contracts:deploy:testnet": "hardhat run scripts/deploy.js --network monadTestnet"
   },

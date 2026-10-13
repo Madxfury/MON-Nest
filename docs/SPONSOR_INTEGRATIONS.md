@@ -54,9 +54,13 @@ Set **server-only** `ALCHEMY_MONAD_TESTNET_RPC_URL`. `/api/rpc` forwards an allo
 
 See `integrations/cre/README.md`. SDK typechecking and receiver tests pass; this is **not** evidence of a CRE simulation or live DON execution. No workflow/forwarder is deployed yet.
 
-## Aurora Intents — incompatible network, not a completed integration
+## Aurora Intents — live availability UI; funding route unsupported
 
 `npm run aurora:check` performs a read-only call to the actual advertised token service. On 2026-10-14 it advertised Monad destinations with chain **143**, not **10143**. Mainnet tokens must not be deposited to testnet contracts. The installed SDK's default client points to a Stoplight mock, so it is deliberately not used to manufacture a successful integration.
+
+The landing page now reads `/api/aurora/availability` to display the live provider capability check, source/destination network IDs, missing assets, mainnet-only evidence, check timestamp, retry action, and provider-data link. The requested source is **Aurora Testnet 1313161555 (ETH)** and destination is **Monad Testnet 10143 (native MON)**. The supplied Aurora RPC is a chain node, not an Intents route service; the current advertised input tokens also omit Aurora Testnet. The server uses a fixed real token-service URL (no mock), validates the response, coalesces requests, caches successful checks for 60 seconds, and returns an explicit unavailable response on errors. No wallet identifiers, API keys, signatures, execution requests, or deposit addresses are involved.
+
+Token availability alone cannot enable funding: even if both testnet assets appear, the UI changes to **Verification required**, not **Bridge enabled**. An official sponsor-supported testnet execution route, deployed destination escrow, quote/review/sign flow, source confirmation, execution tracking, and destination receipt verification are still needed. `npm run aurora:test` verifies network isolation, native-MON gating, missing sources, malformed/offline responses, and API cache/concurrency. This is a functioning capability integration, **not a completed cross-chain funding bounty**.
 
 `RentalEscrow.fundFor` is implemented and tested: an intermediary can fund an existing agreement while refunds and ownership remain with its original parties. That is only the destination prerequisite. Cross-chain quotes, EIP-191 intent signing, source deposit, execution tracking, and final escrow receipt still require a sponsor-confirmed testnet route and end-to-end validation. Bridging is disabled, and AUSD/ERC-20 support is not implemented.
 
@@ -67,6 +71,7 @@ See `integrations/cre/README.md`. SDK typechecking and receiver tests pass; this
 - [x] RPC adapter, simulation, gas review, receipt confirmation and history UI.
 - [x] CRE SDK typecheck and authenticated receiver security tests.
 - [x] Aurora network capability check; fail closed on missing testnet support.
+- [x] Live Aurora route-availability frontend/API with retry, timestamps, source/destination checks and offline handling.
 - [x] Authenticate supplied Envio HyperSync/HyperRPC tokens against Monad Testnet without logging secrets.
 - [x] Enable only Monad Testnet for the Alchemy app and verify chain-ID access.
 - [ ] User-approved Monad Testnet contract deployment; record address/block/receipt.

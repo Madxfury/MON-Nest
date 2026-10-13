@@ -94,6 +94,7 @@ Update these checkboxes only when the corresponding implementation has been veri
 - [x] Real Chainlink CRE SDK workflow and authenticated onchain report receiver; local type/security tests.
 - [ ] Simulate, deploy and activate CRE using a trusted forwarder and account access.
 - [x] Escrow intermediary `fundFor` entry point and read-only Aurora network compatibility check.
+- [x] Live Aurora availability UI/API: requested network IDs, provider evidence, timestamp, retry, and offline handling; no deposit or mainnet execution.
 - [ ] Aurora Intents full cross-chain funding/execution (blocked: advertised Monad routes are mainnet 143, not testnet 10143).
 - [ ] AUSD/ERC-20 escrow support (native MON only today).
 - [ ] Encrypted evidence storage, signed media manifests, notifications, and abuse handling.

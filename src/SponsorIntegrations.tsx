@@ -1,4 +1,5 @@
 import { ArrowUpRight, Check, Clock3, KeyRound, Layers3, Radio, ShieldCheck } from 'lucide-react';
+import AuroraRouteStatus from './AuroraRouteStatus';
 
 export default function SponsorIntegrations({ alchemyConfigured }: { alchemyConfigured: boolean }) {
   const integrations = [
@@ -38,7 +39,7 @@ export default function SponsorIntegrations({ alchemyConfigured }: { alchemyConf
     <div className="sponsor-progress-heading"><Clock3 size={15} aria-hidden="true"/><h4>In progress</h4><span>Not active in the rental flow</span></div>
     <div className="sponsor-progress">
       <article><div><h4>Chainlink CRE</h4><span className="integration-status pending">Locally tested</span></div><strong>Best workflow with CRE</strong><p>Scheduled rent releases and evidence-deadline signals are implemented. CRE simulation, a trusted forwarder, and live deployment are still pending.</p></article>
-      <article><div><h4>Aurora Intents</h4><span className="integration-status pending">Testnet route pending</span></div><strong>Bring Any-Chain Liquidity to Monad</strong><p>Cross-chain funding stays disabled until a supported Monad Testnet route is confirmed. No mainnet bridge or deposit is enabled.</p></article>
+      <AuroraRouteStatus/>
     </div>
     <div className="sponsor-footer"><ShieldCheck size={20} aria-hidden="true"/><p>Mera is the only account layer. Monad Testnet only—no real-money rentals. Statuses describe implementation, not bounty awards.</p><a href="https://github.com/Madxfury/MON-Nest/blob/main/docs/SPONSOR_INTEGRATIONS.md" target="_blank" rel="noreferrer">View integration checklist <ArrowUpRight size={15} aria-hidden="true"/></a></div>
   </section>;
