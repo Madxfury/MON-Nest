@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { ArrowDownRight, ArrowRight, ArrowUpRight, BadgeCheck, BedDouble, Bell, Building2, CalendarDays, Check, ChevronDown, CircleDollarSign, Clock3, FileCheck2, Gavel, Heart, Home as HomeIcon, KeyRound, LayoutDashboard, LogOut, MapPin, Menu, MessageCircle, ReceiptText, Search, ShieldCheck, Sparkles, UserRound, Wallet, X } from 'lucide-react';
 import { homes, type Home, shorten } from './data';
 
-const walletAddress = '0x7A81d44eC024f229b65071A60f9dD6f210b5e441';
+const demoWalletAddress = '0x7A81d44eC024f229b65071A60f9dD6f210b5e441';
 
 function Logo() {
   return <a className="logo" href="#top" aria-label="MON-Nest home"><span className="logo-mark">M</span><span>MON—NEST</span></a>;
@@ -12,7 +12,7 @@ function Logo() {
 
 type DashboardTab = 'Overview' | 'My rentals' | 'Payments' | 'Disputes' | 'Profile';
 
-function Dashboard({ onDisconnect }: { onDisconnect: () => void }) {
+function Dashboard({ address, onDisconnect }: { address: string; onDisconnect: () => void }) {
   const [tab, setTab] = useState<DashboardTab>('Overview');
   const [mobileNav, setMobileNav] = useState(false);
   const nav: { label: DashboardTab; icon: typeof LayoutDashboard }[] = [
@@ -26,7 +26,7 @@ function Dashboard({ onDisconnect }: { onDisconnect: () => void }) {
   return <div className="dashboard-shell">
     <aside className={`dash-sidebar ${mobileNav ? 'open' : ''}`}>
       <div className="dash-brand"><Logo/><button onClick={() => setMobileNav(false)} aria-label="Close dashboard menu"><X/></button></div>
-      <div className="account-chip"><div className="account-avatar">SJ</div><div><strong>Shreejay</strong><span>{shorten(walletAddress)}</span></div><BadgeCheck size={17}/></div>
+      <div className="account-chip"><div className="account-avatar">SJ</div><div><strong>Shreejay</strong><span>{shorten(address)}</span></div><BadgeCheck size={17}/></div>
       <nav className="dash-nav" aria-label="Dashboard">
         {nav.map(item => <button key={item.label} className={tab === item.label ? 'active' : ''} onClick={() => { setTab(item.label); setMobileNav(false); }}><item.icon size={19}/>{item.label}{item.label === 'Disputes' && <span className="nav-count">1</span>}</button>)}
       </nav>
@@ -68,6 +68,7 @@ function Dashboard({ onDisconnect }: { onDisconnect: () => void }) {
 
 function App() {
   const [connected, setConnected] = useState(false);
+  const [walletAccount, setWalletAccount] = useState(demoWalletAddress);
   const [menu, setMenu] = useState(false);
   const [saved, setSaved] = useState<number[]>([]);
   const [selected, setSelected] = useState<Home | null>(null);
@@ -80,15 +81,32 @@ function App() {
     `${home.title} ${home.area} ${home.city}`.toLowerCase().includes(search.toLowerCase())
   ), [city, search]);
 
-  const connect = () => {
-    setConnected(true);
-    setNotice('Demo wallet connected on Monad Testnet');
-    window.setTimeout(() => setNotice(''), 2600);
+  const connect = async () => {
+    try {
+      if (window.ethereum) {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' }) as string[];
+        if (!accounts[0]) return;
+        setWalletAccount(accounts[0]);
+        try {
+          await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x279f' }] });
+        } catch {
+          setNotice('Wallet connected; switch to Monad Testnet to transact');
+        }
+      } else {
+        setWalletAccount(demoWalletAddress);
+      }
+      setConnected(true);
+      setNotice(window.ethereum ? 'Wallet connected' : 'Demo wallet connected — install a wallet for live signing');
+      window.setTimeout(() => setNotice(''), 2600);
+    } catch {
+      setNotice('Wallet connection was cancelled');
+      window.setTimeout(() => setNotice(''), 2600);
+    }
   };
 
   const toggleSaved = (id: number) => setSaved(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
 
-  if (connected) return <Dashboard onDisconnect={() => setConnected(false)} />;
+  if (connected) return <Dashboard address={walletAccount} onDisconnect={() => setConnected(false)} />;
 
   return <div id="top">
     <header className="nav-wrap">
@@ -100,7 +118,7 @@ function App() {
           <a href="#trust" onClick={() => setMenu(false)}>Trust layer</a>
           <a href="#jury" onClick={() => setMenu(false)}>Become a juror</a>
         </div>
-        <button className="wallet-btn" onClick={connect}><Wallet size={17} />{connected ? shorten(walletAddress) : 'Connect wallet'}</button>
+        <button className="wallet-btn" onClick={connect}><Wallet size={17} />Connect wallet</button>
         <button className="menu-btn" onClick={() => setMenu(!menu)} aria-label="Toggle menu">{menu ? <X /> : <Menu />}</button>
       </nav>
     </header>

@@ -61,17 +61,19 @@ This list is the source of truth for build status. Checkboxes should be updated 
 
 ### Monad contracts
 
-- [ ] `PropertyRegistry.sol`: property attestation, metadata hash, status, and owner authorization.
-- [ ] `RentalEscrow.sol`: agreement creation, MON/ERC-20 funding, milestone releases, cancellation, and pull payments.
-- [ ] `DisputeCourt.sol`: juror staking, unbiased assignment, commit/reveal vote, ruling, slashing, and rewards.
-- [ ] `Reputation.sol`: non-transferable role-specific attestations.
-- [ ] Add access control, pausing, reentrancy protection, and invariant checks.
-- [ ] Add unit, fuzz, and invariant tests with explicit edge cases.
+- [x] `PropertyRegistry.sol`: property attestation, metadata hash, status, and owner authorization.
+- [x] `RentalEscrow.sol`: agreement creation, native MON funding, milestone releases, disputes, and pull payments.
+- [x] `DisputeCourt.sol`: juror staking, commit/reveal voting, majority ruling, and locked stake.
+- [x] `Reputation.sol`: non-transferable role-specific scoring records.
+- [x] Add role-based access control, pausing, and reentrancy protection.
+- [x] Add contract unit tests covering registration, funding, release, invalid funding, and jury requirements.
+- [ ] Add ERC-20 funding, cancellation, unbiased juror selection, slashing, rewards, fuzz tests, and invariant tests.
 - [ ] Deploy contracts to the current Monad test network and record verified addresses below.
 
 ### App integrations
 
 - [ ] Replace the demo connector with **Mera** or **Dynamic** passkey onboarding.
+- [x] Add an injected-wallet connection with Monad Testnet switch request and safe demo fallback.
 - [ ] Add typed contract reads/writes and human-readable transaction review.
 - [ ] Add Envio indexing and event-driven home, escrow, dispute, and reputation views.
 - [ ] Store listing files and encrypted evidence offchain; put only content hashes and permissions onchain.
@@ -81,7 +83,7 @@ This list is the source of truth for build status. Checkboxes should be updated 
 
 ### Security, legal, and operations
 
-- [ ] Write escrow state-machine and threat-model documents.
+- [x] Write escrow state-machine and threat-model documents.
 - [ ] Use checks-effects-interactions, pull payments, replay protection, and bounded loops.
 - [ ] Add a multisig-controlled emergency pause and time-locked upgrades, or make contracts immutable.
 - [ ] Complete independent smart-contract review before holding real value.

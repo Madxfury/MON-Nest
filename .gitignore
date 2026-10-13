@@ -8,3 +8,7 @@
 Thumbs.db
 *.tsbuildinfo
 .vercel
+/artifacts
+/cache
+/typechain-types
+/coverage
