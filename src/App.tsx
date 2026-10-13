@@ -12,69 +12,30 @@ function Logo() {
   return <a className="logo" href="#top" aria-label="MON-Nest home"><span className="logo-mark">M</span><span>MON—NEST</span></a>;
 }
 
-type DashboardTab = 'Overview' | 'Explore homes' | 'My rentals' | 'Payments' | 'Disputes' | 'Profile';
-
-function Dashboard({ address, onDisconnect }: { address: string; onDisconnect: () => void }) {
-  const [tab, setTab] = useState<DashboardTab>('Overview');
-  const [mobileNav, setMobileNav] = useState(false);
+function Profile({ address, saved, onHome, onDisconnect }: { address: string; saved: number[]; onHome: () => void; onDisconnect: () => void }) {
   const [balance, setBalance] = useState<string | null>(null);
-  const [balanceError, setBalanceError] = useState(false);
-  const [homeQuery, setHomeQuery] = useState('');
-  const [homeCity, setHomeCity] = useState('All cities');
-  const [homePage, setHomePage] = useState(1);
-  const [activeHome, setActiveHome] = useState<Home | null>(null);
-  const [savedHomeIds, setSavedHomeIds] = useState<number[]>([]);
-  useEffect(() => { setHomePage(1); }, [homeQuery, homeCity]);
-  useEffect(() => { setSavedHomeIds([]); }, [address]);
-  const dashboardHomes = homes.filter(home => (homeCity === 'All cities' || home.city === homeCity) && `${home.title} ${home.area} ${home.city}`.toLowerCase().includes(homeQuery.toLowerCase()));
   useEffect(() => {
     let active = true;
-    setBalance(null); setBalanceError(false);
-    const client = createPublicClient({ chain: monadTestnet, transport: http() });
-    client.getBalance({ address: address as Address }).then(value => {
-      if (active) setBalance(Number(formatEther(value)).toLocaleString(undefined, { maximumFractionDigits: 6 }));
-    }).catch(() => { if (active) setBalanceError(true); });
+    setBalance(null);
+    createPublicClient({ chain: monadTestnet, transport: http() }).getBalance({ address: address as Address })
+      .then(value => { if (active) setBalance(Number(formatEther(value)).toLocaleString(undefined, { maximumFractionDigits: 6 })); })
+      .catch(() => { if (active) setBalance('Unavailable'); });
     return () => { active = false; };
   }, [address]);
-  const nav = [
-    { label: 'Overview' as DashboardTab, icon: LayoutDashboard },
-    { label: 'Explore homes' as DashboardTab, icon: Search },
-    { label: 'My rentals' as DashboardTab, icon: HomeIcon },
-    { label: 'Payments' as DashboardTab, icon: ReceiptText },
-    { label: 'Disputes' as DashboardTab, icon: Gavel },
-    { label: 'Profile' as DashboardTab, icon: UserRound },
-  ];
-  return <div className="dashboard-shell">
-    <aside className={`dash-sidebar ${mobileNav ? 'open' : ''}`}>
-      <div className="dash-brand"><Logo/><button onClick={() => setMobileNav(false)} aria-label="Close dashboard menu"><X/></button></div>
-      <div className="account-chip"><div className="account-avatar"><Wallet size={18}/></div><div><strong>Connected wallet</strong><span>{shorten(address)}</span></div></div>
-      <nav className="dash-nav" aria-label="Dashboard">{nav.map(item => <button key={item.label} className={tab === item.label ? 'active' : ''} onClick={() => { setTab(item.label); setMobileNav(false); }}><item.icon size={19}/>{item.label}</button>)}</nav>
-      <div className="network-card"><span>Monad Testnet</span><strong>Your wallet account</strong><small>Rental contracts are not connected yet</small></div>
-      <button className="disconnect" onClick={onDisconnect}><LogOut size={18}/>Disconnect wallet</button>
-    </aside>
-    <section className="dash-main">
-      <header className="dash-topbar"><button className="dash-menu" aria-label="Open dashboard menu" onClick={() => setMobileNav(true)}><Menu/></button><div><span>MON-Nest /</span><strong>{tab}</strong></div><span title={address}>{shorten(address)}</span></header>
-      <div className="dash-content">
-        <div className="dash-welcome"><div><span className="kicker">YOUR ACCOUNT</span><h1>{tab === 'Overview' ? 'Welcome home.' : tab}</h1><p>Connected as {shorten(address)}</p></div></div>
-        {tab === 'Overview' && <><div className="essential-stats"><div><span>Wallet balance · Monad Testnet</span><strong>{balanceError ? 'Unavailable' : balance === null ? 'Loading…' : `${balance} MON`}</strong><small>Read directly from the network</small></div><div><span>Rental records</span><strong>Not connected</strong><small>No rental data provider configured</small></div><div><span>Escrow records</span><strong>Not connected</strong><small>No account funds assumed</small></div></div></>}
-        {tab === 'Payments' && <TestPayment key={address}/>}
-        {tab === 'Explore homes' ? <>
-          <div className="filters"><div className="search-box"><Search size={18}/><input aria-label="Search homes" placeholder="Search home or neighborhood" value={homeQuery} onChange={e => setHomeQuery(e.target.value)}/></div><label className="select-wrap"><select aria-label="City" value={homeCity} onChange={e => setHomeCity(e.target.value)}><option>All cities</option>{[...new Set(homes.map(home => home.city))].sort().map(city => <option key={city}>{city}</option>)}</select><ChevronDown size={16}/></label><span className="result-count">{dashboardHomes.length} homes</span></div>
-          <p className="catalog-caption">Residential collection · illustrative listings, live availability coming soon.</p>
-          <div className="home-grid">{dashboardHomes.slice((homePage - 1) * 12, homePage * 12).map(home => <article className="home-card" key={home.id}><div className="home-image"><img loading="lazy" src={home.image} alt={`${home.title} illustrative interior`}/><span className="trust-badge">{home.complimentary ? 'Complimentary' : 'Featured home'}</span><button className={`heart ${savedHomeIds.includes(home.id) ? 'active' : ''}`} aria-label={`Save ${home.title}`} onClick={() => setSavedHomeIds(current => current.includes(home.id) ? current.filter(id => id !== home.id) : [...current, home.id])}><Heart size={19} fill={savedHomeIds.includes(home.id) ? 'currentColor' : 'none'}/></button></div><div className="home-content"><div className="home-location"><MapPin size={14}/>{home.area}, {home.city}</div><h3>{home.title}</h3><div className="home-meta"><span><BedDouble size={16}/>{home.beds} bed</span><span>{home.baths} bath</span><span>{home.size} ft²</span></div><div className="tags">{home.tags.map(tag => <span key={tag}>{tag}</span>)}</div><div className="home-bottom"><div><strong>{home.rent} MON</strong><span>/ month</span></div><button onClick={() => setActiveHome(home)}>View home <ArrowRight size={16}/></button></div></div></article>)}</div>
-          {dashboardHomes.length === 0 && <div className="panel placeholder-panel"><h2>No homes found</h2><p>Try another neighborhood or city.</p></div>}
-          {dashboardHomes.length > 12 && <nav className="catalog-pagination" aria-label="Home listing pages"><button disabled={homePage === 1} onClick={() => setHomePage(homePage - 1)}>Previous</button><span>Page {homePage} of {Math.ceil(dashboardHomes.length / 12)}</span><button disabled={homePage === Math.ceil(dashboardHomes.length / 12)} onClick={() => setHomePage(homePage + 1)}>Next</button></nav>}
-        </> : <article className="panel placeholder-panel">
-          {tab === 'Profile' ? <><h2>Your wallet</h2><p style={{ overflowWrap: 'anywhere' }}>{address}</p><p>Your identity comes from the wallet you connect. No personal profile has been created.</p></> : <><div className="placeholder-icon"><HomeIcon/></div><h2>{tab === 'Payments' ? 'No rental payment history available' : tab === 'Disputes' ? 'No dispute records available' : 'Your rental journey starts here'}</h2><p>Your wallet is connected. Rental agreements, escrow balances, and disputes will appear here once the deployed contracts and account data service are connected.</p><button className="primary-btn" onClick={() => setTab('Explore homes')}>Explore homes <ArrowRight size={16}/></button></>}
-        </article>}
-        {activeHome && <div className="modal-backdrop" onMouseDown={() => setActiveHome(null)}><div role="dialog" aria-modal="true" aria-label={activeHome.title} className="modal" onMouseDown={e => e.stopPropagation()}><button className="modal-close" aria-label="Close home details" onClick={() => setActiveHome(null)}><X/></button><img src={activeHome.image} alt={activeHome.title}/><div className="modal-body"><span className="kicker">HOME DETAILS</span><h2>{activeHome.title}</h2><p>{activeHome.area}, {activeHome.city}</p><div className="price-box"><div><span>Monthly rent</span><strong>{activeHome.rent} MON</strong></div><div><span>Deposit</span><strong>{activeHome.deposit} MON</strong></div><div><span>Space</span><strong>{activeHome.beds} bed · {activeHome.size} ft²</strong></div></div>{activeHome.complimentary ? <TestPayment key={address}/> : <p>Illustrative listing. Rental booking is not available yet.</p>}</div></div></div>}
-      </div>
-    </section>
+  const [copied, setCopied] = useState(false);
+  return <div>
+    <header className="nav-wrap"><nav className="nav container"><Logo/><button className="wallet-btn" onClick={onHome}>Explore homes <ArrowRight size={16}/></button></nav></header>
+    <main className="profile-page container">
+      <div className="dash-welcome"><div><span className="kicker">YOUR ACCOUNT</span><h1>Profile</h1><p>Your connected wallet and saved homes, in one place.</p></div><div className="account-avatar"><Wallet size={20}/></div></div>
+      <section className="panel profile-wallet"><h2>Wallet</h2><p className="wallet-address">{address}</p><div className="profile-wallet-actions"><button className="quiet-button" onClick={async () => { try { await navigator.clipboard.writeText(address); setCopied(true); } catch { setCopied(false); } }}>{copied ? 'Copied' : 'Copy address'}</button><a className="quiet-button" target="_blank" rel="noreferrer" href={`https://testnet.monadvision.com/address/${address}`}>View on explorer <ArrowUpRight size={15}/></a></div><dl className="profile-facts"><div><dt>Network balance</dt><dd>{balance === null ? 'Loading…' : balance === 'Unavailable' ? balance : `${balance} MON`}</dd></div><div><dt>Network</dt><dd>Monad Testnet</dd></div></dl><button className="quiet-button" onClick={onDisconnect}><LogOut size={16}/>Disconnect wallet</button></section>
+      <section className="profile-saved"><div className="section-head"><div><span className="kicker">YOUR SHORTLIST</span><h2>Saved homes</h2></div></div>{saved.length ? <div className="home-grid">{homes.filter(home => saved.includes(home.id)).map(home => <article className="home-card" key={home.id}><div className="home-image"><img loading="lazy" src={home.image} alt={home.title}/></div><div className="home-content"><div className="home-location">{home.area}, {home.city}</div><h3>{home.title}</h3><div className="home-bottom"><strong>{home.rent} MON / month</strong><button onClick={onHome}>Explore <ArrowRight size={15}/></button></div></div></article>)}</div> : <div className="panel"><h3>No saved homes yet</h3><p>Tap the heart on a home to add it to your shortlist.</p><button className="primary-btn" onClick={onHome}>Explore homes <ArrowRight size={16}/></button></div>}</section>
+    </main>
   </div>;
 }
 
 function App() {
   const [connected, setConnected] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const [walletAccount, setWalletAccount] = useState('');
   useEffect(() => {
     const provider = window.ethereum;
@@ -93,6 +54,10 @@ function App() {
   }, []);
   const [menu, setMenu] = useState(false);
   const [saved, setSaved] = useState<number[]>([]);
+  useEffect(() => {
+    if (!walletAccount) { setSaved([]); return; }
+    try { setSaved(JSON.parse(localStorage.getItem(`mon-nest-saved:${walletAccount.toLowerCase()}`) || '[]')); } catch { setSaved([]); }
+  }, [walletAccount]);
   const [selected, setSelected] = useState<Home | null>(null);
   const [city, setCity] = useState('All cities');
   const [search, setSearch] = useState('');
@@ -142,10 +107,14 @@ function App() {
 
   const toggleSaved = (id: number) => {
     recordHomeHistory(id, saved.includes(id) ? 'Removed from saved homes' : 'Saved home');
-    setSaved(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
+    setSaved(current => {
+      const next = current.includes(id) ? current.filter(x => x !== id) : [...current, id];
+      if (walletAccount) localStorage.setItem(`mon-nest-saved:${walletAccount.toLowerCase()}`, JSON.stringify(next));
+      return next;
+    });
   };
 
-  if (connected && walletAccount) return <Dashboard key={walletAccount} address={walletAccount} onDisconnect={() => { setConnected(false); setWalletAccount(''); }} />;
+  if (connected && walletAccount && showProfile) return <Profile key={walletAccount} address={walletAccount} saved={saved} onHome={() => setShowProfile(false)} onDisconnect={() => { setConnected(false); setWalletAccount(''); setShowProfile(false); }} />;
 
   return <div id="top">
     <header className="nav-wrap">
@@ -158,7 +127,7 @@ function App() {
           <a href="#jury" onClick={() => setMenu(false)}>Become a juror</a>
           <a href="#architecture" onClick={() => setMenu(false)}>Architecture</a>
         </div>
-        <button className="wallet-btn" onClick={connect}><Wallet size={17} />Connect wallet</button>
+        <button className="wallet-btn" onClick={connected ? () => setShowProfile(true) : connect}><Wallet size={17} />{connected ? 'Profile' : 'Connect wallet'}</button>
         <button className="menu-btn" onClick={() => setMenu(!menu)} aria-label="Toggle menu">{menu ? <X /> : <Menu />}</button>
       </nav>
     </header>
