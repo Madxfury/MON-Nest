@@ -8,6 +8,7 @@ import { homes, type Home, shorten } from './data';
 import TestPayment from './TestPayment';
 import { useWallet } from './wallet/WalletProvider';
 import IndexedAccount from './IndexedAccount';
+import SponsorIntegrations from './SponsorIntegrations';
 import { bookingsAbi, bookingsAddress, bookingsClient, bookingsDeployBlock, expectedBrokerAddress, readBooking, readBookingHistory, type BookingHistoryEvent, type BookingSnapshot } from './bookings';
 
 
@@ -264,17 +265,7 @@ function App({ alchemyConfigured = false }: { alchemyConfigured?: boolean }) {
           <article><span>03 · RENTAL PROTOCOL</span><h3>Protect & resolve</h3><p>Separate Solidity contracts cover property verification, native MON escrow, staked jury voting, and reputation. These are locally tested and not connected to live rentals.</p><small>Written & locally tested</small></article>
           <article><span>04 · ACCOUNT RECORDS</span><h3>Read & verify</h3><p>Envio handlers turn booking, escrow, dispute, vote, and reputation events into account records. Booking history also reads chain logs when indexing is unavailable.</p><small>Indexer implemented · hosting pending</small></article>
         </div>
-        <div className="sponsor-heading"><div><span className="kicker">SPONSOR BOUNTIES</span><h3>What powers the experience.</h3></div><p>Mera is our chosen account layer. Infrastructure integrations below distinguish implemented code from live service verification; these are not claims of awarded bounties.</p></div>
-        <div className="sponsor-grid">
-          {[
-            { name: 'Mera', status: 'SDK integrated', bounty: 'Best Mera-Powered UX on Monad', use: 'Passkey creation, account recovery, and viem transaction signing without a seed phrase or custody backend.', needs: 'Verify a real passkey ceremony and funded booking on this domain' },
-            { name: 'Envio', status: 'Code verified', bounty: 'Best Use of Envio', use: 'Typed event handlers and GraphQL-backed account history for listings, deposits, rent releases, disputes, votes, and reputation.', needs: 'Deployed contracts and a running Envio endpoint' },
-            { name: 'Alchemy', status: alchemyConfigured ? 'RPC configured' : 'Adapter ready', bounty: 'Best Projects using Alchemy', use: 'A server-only RPC adapter serves balance reads, transaction simulation, gas estimates, and signed transaction broadcasts.', needs: alchemyConfigured ? 'Confirm a full booking transaction after contract deployment; reads use the configured testnet service' : 'An Alchemy Monad Testnet RPC URL; public Monad RPC is the current fallback' },
-            { name: 'Chainlink CRE', status: 'Locally tested', bounty: 'Best workflow with CRE', use: 'A scheduled CRE workflow reads finalized escrow state and sends authenticated reports for rent releases and evidence deadlines.', needs: 'CRE simulation, deployment access, and a trusted testnet forwarder' },
-            { name: 'Aurora Intents', status: 'Network blocked', bounty: 'Bring Any-Chain Liquidity to Monad', use: 'The escrow includes a fundFor entry point for intermediary funding. Aurora’s checked Monad routes are mainnet, not our testnet.', needs: 'A confirmed chain 10143 funding route before bridging is enabled' },
-          ].map(sponsor => <article key={sponsor.name}><div className="sponsor-title"><h3>{sponsor.name}</h3><span>{sponsor.status}</span></div><strong>{sponsor.bounty}</strong><p>{sponsor.use}</p><small>Live verification needs: {sponsor.needs}.</small></article>)}
-        </div>
-        <div className="architecture-note"><FileCheck2 size={20}/><p>One account provider: Mera. Dynamic and Privy were evaluated as alternatives and are not enabled or claimed in this build. No real-money rentals or cross-chain deposits are accepted.</p><a href="https://github.com/Madxfury/MON-Nest#implementation-checklist" target="_blank" rel="noreferrer">Inspect the evidence <ArrowUpRight size={16}/></a></div>
+        <SponsorIntegrations alchemyConfigured={alchemyConfigured}/>
       </section>
 
       <section className="cta container"><div><span className="kicker">TRY THE BOOKING FLOW</span><h2>Explore a home.<br/>See its status.</h2></div><div><p>Choose one of five 0 MON testnet homes and review the booking details before connecting a wallet.</p><a href="#homes" className="primary-btn">Find your nest <ArrowRight size={18}/></a></div></section>
