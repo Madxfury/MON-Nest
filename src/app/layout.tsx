@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://mon-nest.vercel.app'),
   openGraph: {
     title: 'MON-Nest',
-    description: 'Five 0 MON testnet booking homes with shared onchain availability.',
+    description: '48 illustrative 0 MON testnet booking homes with shared onchain availability.',
     images: ['/homes/hero-home.jpg'],
   },
 };

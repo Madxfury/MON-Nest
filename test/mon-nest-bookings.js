@@ -10,15 +10,21 @@ describe('MON-Nest public bookings', function () {
     return { admin, broker, renter, nextRenter, outsider, bookings };
   }
 
-  it('configures all five complimentary homes during deployment', async function () {
+  it('configures all 48 complimentary homes during deployment and returns a batched snapshot', async function () {
     const { bookings } = await fixture();
-    for (const id of [4, 45, 46, 47, 48]) {
+    for (let id = 1; id <= 48; id++) {
       const listing = await bookings.listings(id);
       expect(listing.priceWei).to.equal(0);
       expect(listing.durationSeconds).to.equal(30 * 86400);
       expect(listing.active).to.equal(true);
     }
-    expect((await bookings.listings(1)).active).to.equal(false);
+    const ids = Array.from({ length: 48 }, (_, index) => index + 1);
+    const [configured, current, rented] = await bookings.getBookingSnapshots(ids);
+    expect(configured.length).to.equal(48);
+    expect(configured.every(listing => listing.active && listing.priceWei === 0n)).to.equal(true);
+    expect(current.every(booking => booking.renter === ethers.ZeroAddress)).to.equal(true);
+    expect(rented.every(value => !value)).to.equal(true);
+    await expect(bookings.getBookingSnapshots(Array.from({ length: 49 }, (_, index) => index + 1))).to.be.revertedWith('Too many listings');
   });
 
   it('records a zero-MON booking and makes the home unavailable to every wallet', async function () {

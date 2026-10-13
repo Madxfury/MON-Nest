@@ -20,6 +20,7 @@ export const bookingsAbi = parseAbi([
   'function listings(uint256 listingId) view returns (uint128 priceWei, uint64 durationSeconds, bool active)',
   'function bookings(uint256 listingId) view returns (address renter, uint64 bookedAt, uint64 expiresAt, uint256 paidWei)',
   'function isRented(uint256 listingId) view returns (bool)',
+  'function getBookingSnapshots(uint256[] listingIds) view returns ((uint128 priceWei, uint64 durationSeconds, bool active)[] configured, (address renter, uint64 bookedAt, uint64 expiresAt, uint256 paidWei)[] current, bool[] rented)',
   'function book(uint256 listingId, address expectedBroker) payable',
   'event HomeBooked(uint256 indexed listingId, address indexed renter, address indexed broker, uint256 paidWei, uint64 bookedAt, uint64 expiresAt)',
 ]);
@@ -51,6 +52,19 @@ export type BookingHistoryEvent = {
   transactionIndex: number;
   logIndex: number;
 };
+
+export async function readAllBookings(listingIds: number[]): Promise<Record<number, BookingSnapshot>> {
+  if (!bookingsAddress) throw new Error('Booking contract is not configured.');
+  if (listingIds.length > 48 || listingIds.some(id => !Number.isSafeInteger(id) || id < 1 || id > 48) || new Set(listingIds).size !== listingIds.length) throw new Error('Invalid catalog listing IDs.');
+  const [listings, current, rented] = await bookingsClient.readContract({
+    address: bookingsAddress, abi: bookingsAbi, functionName: 'getBookingSnapshots', args: [listingIds.map(BigInt)],
+  });
+  if (listings.length !== listingIds.length || current.length !== listingIds.length || rented.length !== listingIds.length) throw new Error('Unexpected catalog response.');
+  return Object.fromEntries(listingIds.map((id, index) => [id, {
+    renter: current[index].renter, bookedAt: Number(current[index].bookedAt), expiresAt: Number(current[index].expiresAt),
+    paidWei: current[index].paidWei, priceWei: listings[index].priceWei, active: listings[index].active, rented: rented[index],
+  }]));
+}
 
 // Small eth_getLogs windows keep the unindexed payload and RPC response bounded.
 const HISTORY_BLOCK_WINDOW = BigInt(1_000);
@@ -118,6 +132,33 @@ export async function readBookingHistory(listingId: number): Promise<BookingHist
   }
 
   return [...new Map(events.map(event => [`${event.txHash}:${event.logIndex}`, event])).values()].sort((a, b) => a.blockNumber < b.blockNumber ? -1 : a.blockNumber > b.blockNumber ? 1 : a.logIndex - b.logIndex);
+}
+
+/** Read one wallet's booking events once for the profile, rather than scanning every listing. */
+export async function readAccountBookingHistory(renter: Address): Promise<BookingHistoryEvent[]> {
+  if (!bookingsAddress || bookingsDeployBlock === null) return [];
+  if (!isAddress(renter)) throw new Error('Invalid renter address.');
+  const latestBlock = await bookingsClient.getBlockNumber();
+  if (bookingsDeployBlock > latestBlock) return [];
+  if (latestBlock - bookingsDeployBlock > BigInt(200_000)) throw new Error('Account booking history requires a caught-up indexer.');
+  const events: BookingHistoryEvent[] = [];
+  let nextBlock = bookingsDeployBlock;
+  while (nextBlock <= latestBlock) {
+    const requests = [];
+    for (let i = 0; i < HISTORY_BATCH_SIZE && nextBlock <= latestBlock; i++) {
+      const fromBlock = nextBlock;
+      const endBlock = fromBlock + HISTORY_BLOCK_WINDOW - BigInt(1);
+      const toBlock = endBlock < latestBlock ? endBlock : latestBlock;
+      requests.push(bookingsClient.getContractEvents({ address: bookingsAddress, abi: bookingsAbi, eventName: 'HomeBooked', args: { renter }, fromBlock, toBlock, strict: true }));
+      nextBlock = toBlock + BigInt(1);
+    }
+    for (const page of await Promise.all(requests)) for (const log of page) {
+      events.push({ listingId: Number(log.args.listingId), renter: log.args.renter, broker: log.args.broker,
+        paidWei: log.args.paidWei, bookedAt: Number(log.args.bookedAt), expiresAt: Number(log.args.expiresAt),
+        txHash: log.transactionHash, blockNumber: log.blockNumber, transactionIndex: log.transactionIndex, logIndex: log.logIndex });
+    }
+  }
+  return events.sort((a, b) => a.blockNumber < b.blockNumber ? -1 : a.blockNumber > b.blockNumber ? 1 : a.logIndex - b.logIndex);
 }
 
 export async function readBooking(listingId: number): Promise<BookingSnapshot> {
