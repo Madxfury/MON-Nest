@@ -2,7 +2,7 @@
 
 > A Monad Testnet rental marketplace prototype with public, onchain booking availability.
 
-MON-Nest explores how a rental marketplace could combine clear home discovery with verifiable reservations, programmable rent escrow, and dispute resolution. The current web catalog contains 48 illustrative homes, all configured for complimentary Monad Testnet bookings. They are not offers to rent real property.
+MON-Nest explores how a rental marketplace could combine clear home discovery with verifiable reservations, programmable rent escrow, and dispute resolution. The web catalog has 48 illustrative homes on Monad Testnet: the 36 paid homes rent through `RentalEscrow` (rent and deposit held per agreement, monthly release, deposit return, community-jury disputes), and twelve complimentary homes can be booked for 0 MON through `MonNestBookings`. Prices and terms are examples, not offers to rent real property.
 
 **Selected account provider: Mera passkeys.** No Dynamic/Privy account layer is enabled. See [sponsor integration evidence and activation checklist](docs/SPONSOR_INTEGRATIONS.md) for implemented code, verified tests, and remaining live-service gates. A wallet-approved testnet deployment is still required; no private key needs to be shared with this application.
 
@@ -37,11 +37,26 @@ Cross-border AUSD and trading bounties are not targeted: forcing them into a ren
 
 ## How the testnet booking works
 
-`MonNestBookings.sol` is a public availability ledger. The owner configures prices and durations; the constructor seeds all 48 homes at 0 MON for 30 days. On `book(listingId, expectedBroker)`, the contract verifies the reviewed broker, active availability and exact payment, records the renter and expiry, and emits `HomeBooked`. Every visitor reads the same onchain state through one batched snapshot call. Expired bookings become available again, while past events remain in history.
+`MonNestBookings.sol` is a public availability ledger. The owner configures prices and durations; the constructor seeds twelve complimentary homes. On `book(listingId, expectedBroker)`, the contract verifies the reviewed broker, active availability and exact payment, records the renter and expiry, and emits `HomeBooked`. Every visitor reads the same onchain state. Expired bookings become available again, while past events remain in history.
 
-All catalog IDs **1 through 48** are configured at **0 MON for 30 days**, with zero deposit and platform fee. The wallet still pays Monad Testnet network gas. No rent is transferred to the broker for these zero-priced bookings. If an administrator later configures a positive testnet price, `book` requires the exact amount and sends it to the contract's broker address, never back to the renter. The broker wallet cannot book its own listings.
+The twelve complimentary catalog entries are IDs **4, 27, 29, 31, 32, 36, 38, 42, 45, 46, 47, and 48**. The deployment script configures each at **0 MON for 30 days**. A successful booking has a 0 MON listing price; the wallet still pays Monad Testnet network gas. No rent is transferred to the broker for these zero-priced bookings. If an administrator later configures a positive testnet price, `book` requires the exact amount and sends it to the contract's broker address, never back to the renter. The broker wallet cannot book its own listings.
 
-The listings and photos do **not** establish real property ownership or a legal tenancy. This booking contract does not hold a deposit or create a lease. The separate escrow, property registry, court, and reputation contracts are research prototypes that are not connected to a complete renter journey.
+| ID | Illustrative catalog home | Testnet price |
+| --- | --- | --- |
+| 4 | The Nest at Bandra | 0 MON |
+| 27 | Lotus Studio | 0 MON |
+| 29 | Teak Residence | 0 MON |
+| 31 | Marina Studio | 0 MON |
+| 32 | Jasmine Court | 0 MON |
+| 36 | Pink City Loft | 0 MON |
+| 38 | Courtyard Studio | 0 MON |
+| 42 | Hooghly Studio | 0 MON |
+| 45 | Fernlight Studio | 0 MON |
+| 46 | The Red Chair Loft | 0 MON |
+| 47 | The Outlook Residence | 0 MON |
+| 48 | Sunline House | 0 MON |
+
+The listings and photos do **not** establish real property ownership or a legal tenancy. This booking contract does not hold a deposit or create a lease. Paid homes use the separate escrow flow: a renter locks the first month's rent and a refundable deposit, the owner receives rent monthly (minus the 2% platform fee), and the deposit returns to the renter when the lease closes unless a staked jury rules otherwise. These are testnet prototypes, not reviewed for real funds.
 
 ## Implementation checklist
 
@@ -54,7 +69,7 @@ Update these checkboxes only when the corresponding implementation has been veri
 - [x] Connect an injected wallet, restore an already authorized account after refresh, and respond to account changes and explicit disconnect.
 - [x] Show a wallet-specific profile and locally saved homes.
 - [x] Record local browser viewing/saving history, labeled as local activity rather than verified property history.
-- [x] Set all 48 illustrative homes to complimentary 0 MON listings in the catalog and contract constructor.
+- [x] Add twelve complimentary homes as normal catalog listings.
 - [ ] Verify the booking UI against a deployed testnet contract: global availability, transaction pending/confirmed/failed states, explorer links, and the renter's booking in their profile.
 - [ ] Add owner-authorized listings, real availability, rental terms, and an owner operations interface.
 - [ ] Complete mobile and accessibility review of the booking journey.
@@ -62,7 +77,7 @@ Update these checkboxes only when the corresponding implementation has been veri
 ### Monad contracts
 
 - [x] Implement `MonNestBookings.sol` with one active booking per listing, a configured broker recipient, expiry, and events.
-- [x] Add a deployment script that configures complimentary IDs 1–48.
+- [x] Add a deployment script that configures the twelve complimentary IDs.
 - [x] Add unit tests for zero-price booking, shared availability, expiry, payout, and authorization.
 - [x] Write `PropertyRegistry.sol`, `RentalEscrow.sol`, `DisputeCourt.sol`, and `Reputation.sol` prototypes and basic unit tests.
 - [ ] Deploy `MonNestBookings` to Monad Testnet and record its verified address below.
@@ -133,7 +148,7 @@ The booking deployer needs a Monad Testnet wallet with enough MON for gas, plus 
 
 Use the browser-wallet flow below, or configure a private deployment key locally for the alternative CLI flow.
 
-**Recommended: browser-wallet deployment without a private-key file.** Run `npm run contracts:deploy:browser`, open `http://localhost:3011` in the Chrome profile with the confirmed MetaMask deployer, and review/approve the single deployment transaction. The local helper checks the receipt, owner, broker and all 48 listings, then shows the contract address and deployment block. It never reads wallet secrets. Deployment gas requires your explicit wallet approval. The helper currently expects the user-confirmed deployer `0x2733Bd3F25B762Afc860a4B34aC38E5B5D932563` and separate broker `0xc0aB4B8462792E0BeCE8D5e7d6e31CF4716c08CB`.
+**Recommended: browser-wallet deployment without a private-key file.** Run `npm run contracts:deploy:browser`, open `http://localhost:3011` in the Chrome profile with the confirmed MetaMask deployer, and review/approve the single deployment transaction. The local helper checks the receipt, owner, broker and all five listings, then shows the contract address and deployment block. It never reads wallet secrets. Deployment gas requires your explicit wallet approval. The helper currently expects the user-confirmed deployer `0x2733Bd3F25B762Afc860a4B34aC38E5B5D932563` and separate broker `0xc0aB4B8462792E0BeCE8D5e7d6e31CF4716c08CB`.
 
 The following alternative Hardhat flow needs a privately configured deployment key; do not paste it in chat or commit it:
 
@@ -144,7 +159,7 @@ npm run contracts:test
 npm run contracts:deploy:bookings:testnet
 ```
 
-The script prints the `MonNestBookings` address, broker, and all 48 configured listing IDs. Check the address and transaction in the Monad Testnet explorer. Then set `NEXT_PUBLIC_MON_NEST_BOOKINGS_ADDRESS`, `NEXT_PUBLIC_BROKER_ADDRESS`, and `NEXT_PUBLIC_MON_NEST_BOOKINGS_DEPLOY_BLOCK` in `.env.local` for local development and as **Production** environment variables in Vercel. Use the decimal block number from the deployment receipt; a later block omits earlier bookings. Set `NEXT_PUBLIC_MONAD_RPC_URL` if using a different Monad Testnet RPC. Rebuild locally and redeploy Vercel because `NEXT_PUBLIC_*` values are embedded in the browser build. The application reads the onchain broker and checks it against the configured expected recipient before enabling bookings.
+The script prints the `MonNestBookings` address, broker, and the five configured listing IDs. Check the address and transactions in the Monad Testnet explorer. Then set `NEXT_PUBLIC_MON_NEST_BOOKINGS_ADDRESS`, `NEXT_PUBLIC_BROKER_ADDRESS`, and `NEXT_PUBLIC_MON_NEST_BOOKINGS_DEPLOY_BLOCK` in `.env.local` for local development and as **Production** environment variables in Vercel. Use the decimal block number from the deployment receipt; a later block omits earlier bookings. Set `NEXT_PUBLIC_MONAD_RPC_URL` if using a different Monad Testnet RPC. Rebuild locally and redeploy Vercel because `NEXT_PUBLIC_*` values are embedded in the browser build. The application reads the onchain broker and checks it against the configured expected recipient before enabling bookings.
 
 For the web app, import `Madxfury/MON-Nest` in Vercel with the Next.js preset and default build settings. The current public domain is https://mon-nest.vercel.app. A new deployment must be checked at that domain before marking the booking UI live.
 
@@ -152,11 +167,13 @@ For the web app, import `Madxfury/MON-Nest` in Vercel with the Next.js preset an
 
 | Network | Contract | Address |
 | --- | --- | --- |
-| Monad test network | PropertyRegistry | Not deployed |
-| Monad test network | RentalEscrow | Not deployed |
-| Monad test network | DisputeCourt | Not deployed |
-| Monad test network | Reputation | Not deployed |
-| Monad Testnet | MonNestBookings | Not deployed |
+| Monad Testnet | PropertyRegistry | [0xd57ddD4691AFAa049b8deEa3398811DbaF42a54b](https://testnet.monadvision.com/address/0xd57ddD4691AFAa049b8deEa3398811DbaF42a54b) |
+| Monad Testnet | RentalEscrow | [0x3CF0b81e75376dDE45E05f318ac34B51acc45a00](https://testnet.monadvision.com/address/0x3CF0b81e75376dDE45E05f318ac34B51acc45a00) |
+| Monad Testnet | DisputeCourt | [0x5F3510a0978053c12eBB13d5a1D97B8B86fDE0bb](https://testnet.monadvision.com/address/0x5F3510a0978053c12eBB13d5a1D97B8B86fDE0bb) |
+| Monad Testnet | Reputation | [0x2795f86e87d206dd7134458bf18fb00d4c9A0Cc7](https://testnet.monadvision.com/address/0x2795f86e87d206dd7134458bf18fb00d4c9A0Cc7) |
+| Monad Testnet | MonNestBookings | [0x84811Dc78aC306f0d7D842BCE9CEEb917efB4861](https://testnet.monadvision.com/address/0x84811Dc78aC306f0d7D842BCE9CEEb917efB4861) |
+
+`npm run contracts:deploy:testnet` deploys all five contracts and writes their addresses, deployment blocks and the 36 escrow-enabled paid homes (registered and verified in two batched transactions) to `src/deployments/monadTestnet.json`. The web app, history route and `npm run indexer:configure` read that file; matching `NEXT_PUBLIC_*` environment variables override it. The deployer wallet owns the escrow-enabled homes, so rent them from a different wallet. Testnet escrow amounts are 1/1000 of the illustrative listing price.
 
 ## Image credits
 

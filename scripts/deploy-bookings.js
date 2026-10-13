@@ -18,7 +18,7 @@ async function main() {
     network: network.name,
     contract: contractAddress,
     broker,
-    zeroMonListingIds: Array.from({ length: 48 }, (_, index) => index + 1),
+    zeroMonListingIds: [4, 27, 29, 31, 32, 36, 38, 42, 45, 46, 47, 48],
   }, null, 2));
 }
 

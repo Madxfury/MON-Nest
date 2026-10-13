@@ -1,9 +1,10 @@
 import { createPublicClient, getAddress, http, isAddress, parseAbi, type Address, type Hash } from 'viem';
 import { monadTestnet } from 'viem/chains';
+import deployment from './deployments/monadTestnet.json';
 
-const configuredAddress = process.env.NEXT_PUBLIC_MON_NEST_BOOKINGS_ADDRESS;
-const configuredBroker = process.env.NEXT_PUBLIC_BROKER_ADDRESS;
-const configuredDeployBlock = process.env.NEXT_PUBLIC_MON_NEST_BOOKINGS_DEPLOY_BLOCK?.trim();
+const configuredAddress = process.env.NEXT_PUBLIC_MON_NEST_BOOKINGS_ADDRESS || deployment.MonNestBookings;
+const configuredBroker = process.env.NEXT_PUBLIC_BROKER_ADDRESS || deployment.Broker;
+const configuredDeployBlock = process.env.NEXT_PUBLIC_MON_NEST_BOOKINGS_DEPLOY_BLOCK?.trim() || (deployment.MonNestBookingsDeployBlock == null ? undefined : String(deployment.MonNestBookingsDeployBlock));
 
 export const bookingsAddress: Address | null = configuredAddress && isAddress(configuredAddress)
   ? getAddress(configuredAddress)
@@ -27,6 +28,8 @@ export const bookingsAbi = parseAbi([
 
 export const bookingsClient = createPublicClient({
   chain: monadTestnet,
+  // Bundles same-tick reads into one Multicall3 request; the public RPC allows ~15 requests/second.
+  batch: { multicall: true },
   transport: http(typeof window === 'undefined' ? process.env.MONAD_TESTNET_RPC_URL || 'https://testnet-rpc.monad.xyz' : '/api/rpc'),
 });
 
@@ -67,8 +70,11 @@ export async function readAllBookings(listingIds: number[]): Promise<Record<numb
 }
 
 // Small eth_getLogs windows keep the unindexed payload and RPC response bounded.
-const HISTORY_BLOCK_WINDOW = BigInt(1_000);
-const HISTORY_BATCH_SIZE = 4;
+// The public Monad RPC rejects eth_getLogs ranges over 100 blocks (HTTP 413).
+const HISTORY_BLOCK_WINDOW = BigInt(100);
+const HISTORY_BATCH_SIZE = 2;
+// Without the indexer, scan at most 30 windows so a modal never floods the ~15 requests/second RPC limit.
+const MAX_UNINDEXED_BLOCKS = BigInt(3_000);
 
 /** Reads confirmed booking events in chain order. An unset deployment block never triggers a genesis scan. */
 export async function readBookingHistory(listingId: number): Promise<BookingHistoryEvent[]> {
@@ -90,7 +96,7 @@ export async function readBookingHistory(listingId: number): Promise<BookingHist
   if (bookingsDeployBlock > latestBlock) return [];
   const historyStart = indexed.length ? indexed[indexed.length - 1].blockNumber : bookingsDeployBlock;
   // A full unindexed chain scan must not freeze a browser for minutes or exhaust RPC quotas.
-  if (latestBlock - historyStart > BigInt(200_000)) throw new Error('Full booking history requires the configured indexer to catch up.');
+  if (latestBlock - historyStart > MAX_UNINDEXED_BLOCKS) throw new Error('Full booking history requires the configured indexer to catch up.');
 
   const events: BookingHistoryEvent[] = [...indexed];
   let nextBlock = historyStart;
@@ -140,7 +146,7 @@ export async function readAccountBookingHistory(renter: Address): Promise<Bookin
   if (!isAddress(renter)) throw new Error('Invalid renter address.');
   const latestBlock = await bookingsClient.getBlockNumber();
   if (bookingsDeployBlock > latestBlock) return [];
-  if (latestBlock - bookingsDeployBlock > BigInt(200_000)) throw new Error('Account booking history requires a caught-up indexer.');
+  if (latestBlock - bookingsDeployBlock > MAX_UNINDEXED_BLOCKS) throw new Error('Account booking history requires a caught-up indexer.');
   const events: BookingHistoryEvent[] = [];
   let nextBlock = bookingsDeployBlock;
   while (nextBlock <= latestBlock) {
