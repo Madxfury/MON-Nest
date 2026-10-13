@@ -83,6 +83,17 @@ function App() {
   const [page, setPage] = useState(1);
   useEffect(() => { setPage(1); }, [city, search]);
   const [notice, setNotice] = useState('');
+  const [homeHistory, setHomeHistory] = useState<{ homeId: number; action: string; at: string }[]>([]);
+  useEffect(() => {
+    try { setHomeHistory(JSON.parse(localStorage.getItem('mon-nest-home-history') || '[]')); } catch { setHomeHistory([]); }
+  }, []);
+  const recordHomeHistory = (homeId: number, action: string) => {
+    setHomeHistory(current => {
+      const next = [{ homeId, action, at: new Date().toISOString() }, ...current].slice(0, 200);
+      localStorage.setItem('mon-nest-home-history', JSON.stringify(next));
+      return next;
+    });
+  };
 
   const visibleHomes = useMemo(() => homes.filter(home =>
     (city === 'All cities' || home.city === city) &&
@@ -113,7 +124,10 @@ function App() {
     }
   };
 
-  const toggleSaved = (id: number) => setSaved(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
+  const toggleSaved = (id: number) => {
+    recordHomeHistory(id, saved.includes(id) ? 'Removed from saved homes' : 'Saved home');
+    setSaved(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
+  };
 
   if (connected && walletAccount) return <Dashboard key={walletAccount} address={walletAccount} onDisconnect={() => { setConnected(false); setWalletAccount(''); }} />;
 
@@ -165,7 +179,7 @@ function App() {
         <div className="home-grid">
           {visibleHomes.slice((page - 1) * 12, page * 12).map(home => <article className="home-card" key={home.id}>
             <div className="home-image"><img loading="lazy" src={home.image} alt={`${home.title} illustrative interior`} /><span className="trust-badge">{home.complimentary ? 'Complimentary' : 'Featured home'}</span><button className={`heart ${saved.includes(home.id) ? 'active' : ''}`} onClick={() => toggleSaved(home.id)} aria-label={`Save ${home.title}`}><Heart size={19} fill={saved.includes(home.id) ? 'currentColor' : 'none'}/></button></div>
-            <div className="home-content"><div className="home-location"><MapPin size={14}/>{home.area}, {home.city}</div><h3>{home.title}</h3><div className="home-meta"><span><BedDouble size={16}/>{home.beds} bed</span><span>{home.baths} bath</span><span>{home.size} ft²</span></div><div className="tags">{home.tags.map(t => <span key={t}>{t}</span>)}</div><div className="home-bottom"><div><strong>{home.rent} MON</strong><span>/ month</span></div><button onClick={() => setSelected(home)}>View & book <ArrowRight size={16}/></button></div></div>
+            <div className="home-content"><div className="home-location"><MapPin size={14}/>{home.area}, {home.city}</div><h3>{home.title}</h3><div className="home-meta"><span><BedDouble size={16}/>{home.beds} bed</span><span>{home.baths} bath</span><span>{home.size} ft²</span></div><div className="tags">{home.tags.map(t => <span key={t}>{t}</span>)}</div><div className="home-bottom"><div><strong>{home.rent} MON</strong><span>/ month</span></div><button onClick={() => { recordHomeHistory(home.id, 'Viewed listing'); setSelected(home); }}>View & book <ArrowRight size={16}/></button></div></div>
           </article>)}
         </div>
         {visibleHomes.length === 0 && <div className="panel placeholder-panel"><h3>No homes match your search</h3><p>Try a different neighborhood or choose all cities.</p><button className="primary-btn" onClick={() => { setSearch(''); setCity('All cities'); }}>Clear filters</button></div>}
@@ -212,7 +226,7 @@ function App() {
 
     <footer><div className="container footer-grid"><div><Logo/><p>Verified rentals. Protected payments.<br/>Fair outcomes.</p></div><div><strong>Explore</strong><a href="#homes">Homes</a><a href="#how">How it works</a><a href="#jury">Juror network</a></div><div><strong>Build</strong><a href="https://docs.monad.xyz" target="_blank" rel="noreferrer">Monad docs</a><a href="https://github.com/Madxfury/MON-Nest" target="_blank" rel="noreferrer">GitHub</a><a href="https://hackathon.monad.xyz/tracks" target="_blank" rel="noreferrer">Metropolis</a></div><div className="footer-note"><span>Built for Metropolis 2026</span><small>Consumer Products & Payments · Monad</small></div></div><div className="container foot-bottom"><span>© 2026 MON-Nest</span><span>Prototype · Testnet only · Not financial or legal advice</span></div></footer>
 
-    {selected && <div className="modal-backdrop" onMouseDown={() => setSelected(null)}><div className="modal" onMouseDown={e => e.stopPropagation()}><button className="modal-close" onClick={() => setSelected(null)}><X/></button><img src={selected.image} alt={selected.title}/><div className="modal-body"><span className="kicker">{selected.complimentary ? 'COMPLIMENTARY STAY' : 'RENTAL DETAILS'}</span><h2>{selected.title}</h2><p><MapPin size={16}/>{selected.area}, {selected.city}</p><div className="price-box"><div><span>Monthly rent</span><strong>{selected.rent} MON</strong></div><div><span>Protected deposit</span><strong>{selected.deposit} MON</strong></div><div><span>Platform fee</span><strong>{(selected.rent * .02).toFixed(2)} MON</strong></div></div>{selected.complimentary ? <TestPayment key={selected.id}/> : <><button className="primary-btn full" onClick={() => { setNotice('Online rental booking is not available yet.'); setSelected(null); }}>Check availability <ArrowRight size={18}/></button><small>Illustrative listing. Rental booking is not available yet.</small></>}</div></div></div>}
+    {selected && <div className="modal-backdrop" onMouseDown={() => setSelected(null)}><div className="modal" onMouseDown={e => e.stopPropagation()}><button className="modal-close" onClick={() => setSelected(null)}><X/></button><img src={selected.image} alt={selected.title}/><div className="modal-body"><span className="kicker">{selected.complimentary ? 'COMPLIMENTARY STAY' : 'RENTAL DETAILS'}</span><h2>{selected.title}</h2><p><MapPin size={16}/>{selected.area}, {selected.city}</p><section className="property-history" aria-label="Property history"><h3>Home history</h3><p>No verified ownership, tenancy, or maintenance records are available for this listing yet.</p><h4>Your recent activity</h4><small>Recorded on this browser only. This is not an onchain property record.</small><ol>{homeHistory.filter(event => event.homeId === selected.id).slice(0, 8).map((event, index) => <li key={event.at + index}><strong>{event.action}</strong><time dateTime={event.at}>{new Date(event.at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</time></li>)}</ol></section><div className="price-box"><div><span>Monthly rent</span><strong>{selected.rent} MON</strong></div><div><span>Protected deposit</span><strong>{selected.deposit} MON</strong></div><div><span>Platform fee</span><strong>{(selected.rent * .02).toFixed(2)} MON</strong></div></div>{selected.complimentary ? <TestPayment key={selected.id}/> : <><button className="primary-btn full" onClick={() => { setNotice('Online rental booking is not available yet.'); setSelected(null); }}>Check availability <ArrowRight size={18}/></button><small>Illustrative listing. Rental booking is not available yet.</small></>}</div></div></div>}
   </div>;
 }
 
