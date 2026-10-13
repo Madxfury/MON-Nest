@@ -52,7 +52,7 @@ This list is the source of truth for build status. Checkboxes should be updated 
 - [x] Name and brand the product as **MON-Nest**.
 - [x] Build a responsive Next.js marketplace experience.
 - [x] Add authentic residential photography stored locally for reliable rendering.
-- [x] Add discovery filters, saved homes, wallet-demo state, booking preview, and responsive navigation.
+- [x] Add discovery filters, saved homes, real wallet connection, booking preview, and responsive navigation.
 - [x] Explain escrow, proof, and community resolution without requiring crypto knowledge.
 - [x] Label all prototype values and simulated actions honestly.
 - [x] Add a wallet-gated renter dashboard with rental, escrow, payment, activity, and dispute views.
@@ -73,7 +73,7 @@ This list is the source of truth for build status. Checkboxes should be updated 
 ### App integrations
 
 - [ ] Replace the demo connector with **Mera** or **Dynamic** passkey onboarding.
-- [x] Add an injected-wallet connection with Monad Testnet switch request and safe demo fallback.
+- [x] Add an injected-wallet connection with Monad Testnet switch request, account-change handling, and live wallet balance. No fake account fallback.
 - [ ] Add typed contract reads/writes and human-readable transaction review.
 - [ ] Add Envio indexing and event-driven home, escrow, dispute, and reputation views.
 - [ ] Store listing files and encrypted evidence offchain; put only content hashes and permissions onchain.
