@@ -126,6 +126,7 @@ function App() {
           <a href="#how" onClick={() => setMenu(false)}>How it works</a>
           <a href="#trust" onClick={() => setMenu(false)}>Trust layer</a>
           <a href="#jury" onClick={() => setMenu(false)}>Become a juror</a>
+          <a href="#architecture" onClick={() => setMenu(false)}>Architecture</a>
         </div>
         <button className="wallet-btn" onClick={connect}><Wallet size={17} />Connect wallet</button>
         <button className="menu-btn" onClick={() => setMenu(!menu)} aria-label="Toggle menu">{menu ? <X /> : <Menu />}</button>
@@ -183,6 +184,28 @@ function App() {
       </section>
 
       <section className="jury" id="jury"><div className="container jury-grid"><div><span className="kicker">COMMUNITY COURT</span><h2>Fair outcomes need skin in the game.</h2><p>Jurors stake MON, receive cases at random, review privacy-aware evidence, and earn fees for honest participation. Majority decides; reputation remembers.</p><button className="primary-btn dark" onClick={() => { if (!connected) connect(); setNotice('Juror onboarding added to your demo journey'); }}>Join the jury pool <ArrowRight size={18}/></button></div><div className="case-card"><div className="case-top"><span>ANONYMOUS CASE</span><span>14h 22m left</span></div><h3>Security deposit · wall damage</h3><div className="evidence"><span>4 evidence items</span><div className="evidence-bars"><i/><i/><i/><i/></div></div><div className="vote-row"><button>Tenant <strong>3</strong></button><button>Owner <strong>2</strong></button></div><small>Illustrative jury flow · no live case data</small></div></div></section>
+
+      <section className="build-section container" id="architecture">
+        <div className="section-head"><div><span className="kicker">UNDER THE HOOD</span><h2>Built for trust.<br/>Designed for everyday renting.</h2></div><p>Consumer Products & Payments is our primary track. Here’s where Monad is used today and where sponsor services fit into the rental journey.</p></div>
+        <div className="architecture-flow">
+          <article><span>01 · EXPERIENCE</span><h3>Find & connect</h3><p>Next.js delivers the home catalog and wallet-specific dashboard. Your wallet supplies your address; balance comes directly from Monad Testnet.</p><small>Implemented</small></article>
+          <article><span>02 · TRANSACTIONS</span><h3>Sign & settle</h3><p>The complimentary listing sends a zero-value self-transfer through your wallet. The app waits for a network receipt and links to the explorer.</p><small>Live wallet flow</small></article>
+          <article><span>03 · RENTAL PROTOCOL</span><h3>Protect & resolve</h3><p>Solidity contracts cover property verification, native MON escrow, staked jury voting, and reputation. Four unit tests pass; contracts await deployment and app wiring.</p><small>Written & locally tested</small></article>
+          <article><span>04 · ACCOUNT RECORDS</span><h3>Read & verify</h3><p>An indexer will turn contract events into rental and payment histories. Evidence belongs in encrypted offchain storage with content hashes recorded onchain.</p><small>Planned integration</small></article>
+        </div>
+        <div className="sponsor-heading"><div><span className="kicker">SPONSOR BOUNTIES</span><h3>Integration status, openly.</h3></div><p>No sponsor bounty integration is completed yet. These are the selected implementation targets; using Monad and a regular wallet alone does not qualify.</p></div>
+        <div className="sponsor-grid">
+          {[
+            { name: 'Mera', bounty: 'Best Mera-Powered UX on Monad', use: 'Replace extension-wallet onboarding with a passkey account layer for renters and owners.', needs: 'Mera account integration and transaction signing' },
+            { name: 'Dynamic', bounty: 'Best Use of Dynamic', use: 'Alternative account provider for embedded wallets, authentication, and rental transaction signing.', needs: 'Environment ID and deployed SDK flow' },
+            { name: 'Envio', bounty: 'Best Use of Envio', use: 'Index property registration, funded escrows, rent releases, and court events into each wallet’s dashboard.', needs: 'Deployed contracts, handlers, and hosted indexer' },
+            { name: 'Alchemy', bounty: 'Best Projects using Alchemy', use: 'Provide application RPC and transaction data access for Monad contract reads and writes.', needs: 'Configured Alchemy service used by the app' },
+            { name: 'Chainlink CRE', bounty: 'Best workflow with CRE', use: 'Orchestrate rental deadlines and dispute escalation through a verifiable workflow.', needs: 'A built and simulated CRE workflow' },
+            { name: 'Aurora Intents', bounty: 'Bring Any-Chain Liquidity to Monad', use: 'Allow tenants to fund rental escrow from assets held on another chain.', needs: 'A working cross-chain deposit-and-execute flow' },
+          ].map(sponsor => <article key={sponsor.name}><div className="sponsor-title"><h3>{sponsor.name}</h3><span>Planned</span></div><strong>{sponsor.bounty}</strong><p>{sponsor.use}</p><small>Completion requires: {sponsor.needs}.</small></article>)}
+        </div>
+        <div className="architecture-note"><FileCheck2 size={20}/><p>Mera and Dynamic are alternative account-layer approaches; the final provider is not selected. Sponsor services above are not currently powering the app.</p><a href="https://github.com/Madxfury/MON-Nest#implementation-checklist" target="_blank" rel="noreferrer">Follow the build <ArrowUpRight size={16}/></a></div>
+      </section>
 
       <section className="cta container"><div><span className="kicker">A HOME SHOULD FEEL SAFE</span><h2>Your next chapter,<br/>secured on Monad.</h2></div><div><p>Skip the broker. Keep your deposit protected. Rent with proof.</p><a href="#homes" className="primary-btn">Find your nest <ArrowRight size={18}/></a></div></section>
     </main>
