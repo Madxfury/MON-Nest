@@ -88,7 +88,9 @@ Update these checkboxes only when the corresponding implementation has been veri
 - [x] Consume Envio through a server-only GraphQL adapter and account UI, with RPC booking history fallback.
 - [ ] Host Envio, configure its endpoint, and verify live ingestion → GraphQL → production UI.
 - [x] Server-only RPC adapter, contract simulation, gas estimate review and signed transaction broadcast support.
-- [ ] Configure an Alchemy Monad Testnet URL and verify the sponsor service end to end.
+- [x] Authenticate supplied Envio HyperSync/HyperRPC tokens on chain 10143; load them privately into the indexer.
+- [x] Configure a server-only Alchemy Monad Testnet URL and verify chain-ID reads (Monad Mainnet remains disabled).
+- [ ] Verify Alchemy transaction simulation/broadcast end to end with the deployed booking contract.
 - [x] Real Chainlink CRE SDK workflow and authenticated onchain report receiver; local type/security tests.
 - [ ] Simulate, deploy and activate CRE using a trusted forwarder and account access.
 - [x] Escrow intermediary `fundFor` entry point and read-only Aurora network compatibility check.

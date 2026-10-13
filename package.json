@@ -12,6 +12,7 @@
     "contracts:test": "hardhat test",
     "wallet:test": "node scripts/test-mera.mjs",
     "indexer:configure": "node scripts/configure-indexer.js",
+    "envio:check": "node scripts/check-envio.mjs",
     "aurora:check": "node integrations/aurora/check-network.mjs",
     "contracts:deploy:bookings:testnet": "hardhat run scripts/deploy-bookings.js --network monadTestnet",
     "contracts:deploy:testnet": "hardhat run scripts/deploy.js --network monadTestnet"

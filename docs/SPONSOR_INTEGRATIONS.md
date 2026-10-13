@@ -18,6 +18,8 @@ Official reference: [Mera](https://github.com/category-labs/mera). The SDK is pr
 
 ## Envio — generated, typechecked, receipt mapping tested; hosting pending
 
+The supplied HyperSync and HyperRPC credentials are stored in ignored root `.env.local` as `ENVIO_API_TOKEN` and `ENVIO_HYPERRPC_TOKEN`. On 2026-10-14, an authenticated HyperSync query and HyperRPC chain-ID request both succeeded for Monad Testnet (10143). Run `npm run envio:check` to repeat these read-only checks without printing credentials. `indexer/run-envio.mjs` loads the ignored root credentials for codegen/dev, and generated configuration references the HyperRPC token through an environment placeholder, never a literal secret. HyperSync is the primary indexer source; HyperRPC is a fallback. The current HyperRPC free package is limited to five requests/minute, so it is not the visitor-facing primary RPC.
+
 `indexer/config.yaml`, `schema.graphql`, and `src/handlers/rentals.ts` implement booking/listing, registry, escrow funding/release, disputes, court commitments/reveals/results, and reputation entities. Histories retain every event, rather than overwriting previous bookings. IDs include chain and contract, and the app queries only configured deployments.
 
 `test/indexer-handlers.js` replays actual local Hardhat receipts into an in-memory entity store. It verifies mapping logic and all major milestones, **not** the hosted ingestion/Hasura path. Envio codegen and its separate TypeScript check also pass.
@@ -40,7 +42,9 @@ Use Linux/macOS or WSL2 (Envio does not run natively on Windows), Node 24, and D
 
 Official reference: [Envio HyperIndex guide](https://docs.envio.dev/blog/index-arc-usdc-transfers).
 
-## Alchemy — real RPC adapter; sponsor URL pending
+## Alchemy — Monad Testnet RPC configured and verified
+
+On 2026-10-14, Monad Testnet was enabled for the supplied Alchemy app with user approval. Monad Mainnet remains disabled. The authenticated endpoint returned chain ID 10143 after activation propagated. Its server-only URL is stored in ignored `.env.local` and the Vercel production environment. This verifies service access/reads, not a booking transaction or awarded bounty. The website displays configuration status dynamically and the RPC response includes a non-secret provider header.
 
 Set **server-only** `ALCHEMY_MONAD_TESTNET_RPC_URL`. `/api/rpc` forwards an allowlisted set of JSON-RPC operations with request-size, batch-size and timeout limits. Balance, contract reads, gas estimation, preflight simulation, receipts, logs, and Mera signed broadcasts use it. Without this setting the app uses the public Monad Testnet RPC and does **not** claim Alchemy is active. No Alchemy webhooks are claimed or required for the present polling flow. Production needs durable rate limiting/service quotas.
 
@@ -63,6 +67,8 @@ See `integrations/cre/README.md`. SDK typechecking and receiver tests pass; this
 - [x] RPC adapter, simulation, gas review, receipt confirmation and history UI.
 - [x] CRE SDK typecheck and authenticated receiver security tests.
 - [x] Aurora network capability check; fail closed on missing testnet support.
+- [x] Authenticate supplied Envio HyperSync/HyperRPC tokens against Monad Testnet without logging secrets.
+- [x] Enable only Monad Testnet for the Alchemy app and verify chain-ID access.
 - [ ] User-approved Monad Testnet contract deployment; record address/block/receipt.
 - [ ] Real Mera WebAuthn ceremony and funded booking on production domain.
 - [ ] Hosted Envio caught up; production history/profile query verified.

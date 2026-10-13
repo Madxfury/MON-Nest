@@ -62,7 +62,7 @@ function Profile({ address, saved, bookings, bookingHistory, historyStatus, avai
   </div>;
 }
 
-function App() {
+function App({ alchemyConfigured = false }: { alchemyConfigured?: boolean }) {
   const wallet = useWallet();
   const walletAccount = wallet.address || '';
   const connected = Boolean(wallet.address);
@@ -269,7 +269,7 @@ function App() {
           {[
             { name: 'Mera', status: 'SDK integrated', bounty: 'Best Mera-Powered UX on Monad', use: 'Passkey creation, account recovery, and viem transaction signing without a seed phrase or custody backend.', needs: 'Verify a real passkey ceremony and funded booking on this domain' },
             { name: 'Envio', status: 'Code verified', bounty: 'Best Use of Envio', use: 'Typed event handlers and GraphQL-backed account history for listings, deposits, rent releases, disputes, votes, and reputation.', needs: 'Deployed contracts and a running Envio endpoint' },
-            { name: 'Alchemy', status: 'Adapter ready', bounty: 'Best Projects using Alchemy', use: 'A server-only RPC adapter serves balance reads, transaction simulation, gas estimates, and signed transaction broadcasts.', needs: 'An Alchemy Monad Testnet RPC URL; public Monad RPC is the current fallback' },
+            { name: 'Alchemy', status: alchemyConfigured ? 'RPC configured' : 'Adapter ready', bounty: 'Best Projects using Alchemy', use: 'A server-only RPC adapter serves balance reads, transaction simulation, gas estimates, and signed transaction broadcasts.', needs: alchemyConfigured ? 'Confirm a full booking transaction after contract deployment; reads use the configured testnet service' : 'An Alchemy Monad Testnet RPC URL; public Monad RPC is the current fallback' },
             { name: 'Chainlink CRE', status: 'Locally tested', bounty: 'Best workflow with CRE', use: 'A scheduled CRE workflow reads finalized escrow state and sends authenticated reports for rent releases and evidence deadlines.', needs: 'CRE simulation, deployment access, and a trusted testnet forwarder' },
             { name: 'Aurora Intents', status: 'Network blocked', bounty: 'Bring Any-Chain Liquidity to Monad', use: 'The escrow includes a fundFor entry point for intermediary funding. Aurora’s checked Monad routes are mainnet, not our testnet.', needs: 'A confirmed chain 10143 funding route before bridging is enabled' },
           ].map(sponsor => <article key={sponsor.name}><div className="sponsor-title"><h3>{sponsor.name}</h3><span>{sponsor.status}</span></div><strong>{sponsor.bounty}</strong><p>{sponsor.use}</p><small>Live verification needs: {sponsor.needs}.</small></article>)}

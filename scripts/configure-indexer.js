@@ -22,5 +22,6 @@ for (const [name, [artifactName, variable]] of Object.entries(names)) {
 }
 if (!addresses.find(item => item.name === 'Bookings').address.length) throw new Error('Deploy and configure MonNestBookings first.');
 // JSON is valid YAML. RPC secrets stay in service environment variables.
-fs.writeFileSync('indexer/config.yaml', JSON.stringify({ name: 'mon-nest', field_selection: { transaction_fields: ['hash'] }, contracts, chains: [{ id: 10143, start_block: Number(start), rpc: 'https://testnet-rpc.monad.xyz', contracts: addresses }] }, null, 2) + '\n');
+const rpc = process.env.ENVIO_HYPERRPC_TOKEN ? [{ url: 'https://10143.rpc.hypersync.xyz', for: 'fallback', headers: { Authorization: 'Bearer ${ENVIO_HYPERRPC_TOKEN}' } }] : 'https://testnet-rpc.monad.xyz';
+fs.writeFileSync('indexer/config.yaml', JSON.stringify({ name: 'mon-nest', field_selection: { transaction_fields: ['hash'] }, contracts, chains: [{ id: 10143, start_block: Number(start), hypersync_config: { url: 'https://10143.hypersync.xyz' }, rpc, contracts: addresses }] }, null, 2) + '\n');
 console.log(`Configured Monad Testnet contract addresses from block ${start}.`);

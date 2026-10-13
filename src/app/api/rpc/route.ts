@@ -21,6 +21,6 @@ export async function POST(request: Request) {
     }
     const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: text, signal: AbortSignal.timeout(20_000), cache: 'no-store' });
     if (!response.ok) return NextResponse.json({ error: 'RPC temporarily unavailable' }, { status: 502 });
-    return NextResponse.json(await response.json(), { headers: { 'Cache-Control': 'no-store' } });
+    return NextResponse.json(await response.json(), { headers: { 'Cache-Control': 'no-store', 'X-MON-Nest-RPC': process.env.ALCHEMY_MONAD_TESTNET_RPC_URL ? 'alchemy-monad-testnet' : 'monad-testnet' } });
   } catch { return NextResponse.json({ error: 'RPC request failed' }, { status: 502 }); }
 }
