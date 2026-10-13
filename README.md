@@ -55,7 +55,8 @@ This list is the source of truth for build status. Checkboxes should be updated 
 - [x] Add discovery filters, saved homes, wallet-demo state, booking preview, and responsive navigation.
 - [x] Explain escrow, proof, and community resolution without requiring crypto knowledge.
 - [x] Label all prototype values and simulated actions honestly.
-- [ ] Add owner listing creation and renter/owner dashboards.
+- [x] Add a wallet-gated renter dashboard with rental, escrow, payment, activity, and dispute views.
+- [ ] Add owner listing creation and owner operations dashboard.
 - [ ] Add accessible form validation, empty/error states, and a guided first-use flow.
 
 ### Monad contracts

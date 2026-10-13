@@ -1,13 +1,69 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ArrowRight, BadgeCheck, BedDouble, Building2, Check, ChevronDown, CircleDollarSign, FileCheck2, Gavel, Heart, KeyRound, MapPin, Menu, ShieldCheck, Sparkles, Wallet, X } from 'lucide-react';
-import { homes, Home, shorten } from './data';
+import { ArrowDownRight, ArrowRight, ArrowUpRight, BadgeCheck, BedDouble, Bell, Building2, CalendarDays, Check, ChevronDown, CircleDollarSign, Clock3, FileCheck2, Gavel, Heart, Home as HomeIcon, KeyRound, LayoutDashboard, LogOut, MapPin, Menu, MessageCircle, ReceiptText, Search, ShieldCheck, Sparkles, UserRound, Wallet, X } from 'lucide-react';
+import { homes, type Home, shorten } from './data';
 
 const walletAddress = '0x7A81d44eC024f229b65071A60f9dD6f210b5e441';
 
 function Logo() {
   return <a className="logo" href="#top" aria-label="MON-Nest home"><span className="logo-mark">M</span><span>MON—NEST</span></a>;
+}
+
+type DashboardTab = 'Overview' | 'My rentals' | 'Payments' | 'Disputes' | 'Profile';
+
+function Dashboard({ onDisconnect }: { onDisconnect: () => void }) {
+  const [tab, setTab] = useState<DashboardTab>('Overview');
+  const [mobileNav, setMobileNav] = useState(false);
+  const nav: { label: DashboardTab; icon: typeof LayoutDashboard }[] = [
+    { label: 'Overview', icon: LayoutDashboard },
+    { label: 'My rentals', icon: HomeIcon },
+    { label: 'Payments', icon: ReceiptText },
+    { label: 'Disputes', icon: Gavel },
+    { label: 'Profile', icon: UserRound },
+  ];
+
+  return <div className="dashboard-shell">
+    <aside className={`dash-sidebar ${mobileNav ? 'open' : ''}`}>
+      <div className="dash-brand"><Logo/><button onClick={() => setMobileNav(false)} aria-label="Close dashboard menu"><X/></button></div>
+      <div className="account-chip"><div className="account-avatar">SJ</div><div><strong>Shreejay</strong><span>{shorten(walletAddress)}</span></div><BadgeCheck size={17}/></div>
+      <nav className="dash-nav" aria-label="Dashboard">
+        {nav.map(item => <button key={item.label} className={tab === item.label ? 'active' : ''} onClick={() => { setTab(item.label); setMobileNav(false); }}><item.icon size={19}/>{item.label}{item.label === 'Disputes' && <span className="nav-count">1</span>}</button>)}
+      </nav>
+      <div className="network-card"><span><i/> Monad Testnet</span><strong>Demo mode</strong><small>No real funds are connected</small></div>
+      <button className="disconnect" onClick={onDisconnect}><LogOut size={18}/>Disconnect wallet</button>
+    </aside>
+
+    <section className="dash-main">
+      <header className="dash-topbar"><button className="dash-menu" onClick={() => setMobileNav(true)}><Menu/></button><div><span>MON-Nest /</span><strong>{tab}</strong></div><div className="dash-tools"><label><Search size={17}/><input placeholder="Search dashboard" /></label><button aria-label="Notifications"><Bell size={19}/><i/></button><div className="mini-avatar">SJ</div></div></header>
+
+      <div className="dash-content">
+        {tab === 'Overview' && <>
+          <div className="dash-welcome"><div><span className="kicker">TUESDAY, 13 OCTOBER</span><h1>Welcome home, Shreejay.</h1><p>Your rental is healthy. The next rent release is scheduled in 6 days.</p></div><button className="primary-btn"><MessageCircle size={18}/>Contact owner</button></div>
+
+          <div className="metric-grid">
+            <article><div className="metric-icon purple"><HomeIcon/></div><span>Active rentals</span><strong>1</strong><small><ArrowUpRight/>Verified agreement</small></article>
+            <article><div className="metric-icon lime"><ShieldCheck/></div><span>Protected in escrow</span><strong>84.00 <em>MON</em></strong><small><ArrowDownRight/>100% secured</small></article>
+            <article><div className="metric-icon sand"><CalendarDays/></div><span>Next payment</span><strong>42.00 <em>MON</em></strong><small><Clock3/>19 October 2026</small></article>
+            <article><div className="metric-icon rose"><Sparkles/></div><span>Trust score</span><strong>92<em>/100</em></strong><small><ArrowUpRight/>+4 this lease</small></article>
+          </div>
+
+          <div className="dash-grid">
+            <article className="panel rental-panel"><div className="panel-head"><div><span className="panel-kicker">CURRENT RENTAL</span><h2>Sea Glass Residence</h2></div><span className="active-badge"><i/> Active</span></div><div className="rental-summary"><img src="/homes/sea-glass.jpg" alt="Sea Glass Residence"/><div><p><MapPin size={14}/>Bandra West, Mumbai</p><div className="rental-details"><span><small>Agreement</small><strong>#MN-2048</strong></span><span><small>Lease ends</small><strong>30 Sep 2027</strong></span><span><small>Monthly rent</small><strong>42 MON</strong></span></div><div className="rental-progress"><div><span>Lease progress</span><strong>8%</strong></div><div className="progress-track"><i/></div><small>29 days completed · 336 remaining</small></div></div></div><div className="panel-actions"><button onClick={() => setTab('My rentals')}>View agreement <ArrowRight size={15}/></button><button><FileCheck2 size={15}/>Add check-in evidence</button></div></article>
+
+            <article className="panel escrow-panel"><div className="panel-head"><div><span className="panel-kicker">ESCROW HEALTH</span><h2>Funds protected</h2></div><ShieldCheck className="escrow-shield"/></div><div className="donut"><div><strong>84</strong><span>MON</span></div></div><div className="escrow-legend"><div><i className="rent-dot"/><span>October rent</span><strong>42 MON</strong></div><div><i className="deposit-dot"/><span>Security deposit</span><strong>42 MON</strong></div></div><div className="contract-row"><span>Contract</span><a href="https://testnet.monadvision.com" target="_blank" rel="noreferrer">0x8c1…a04 <ArrowUpRight size={13}/></a></div></article>
+          </div>
+
+          <div className="dash-grid lower">
+            <article className="panel activity-panel"><div className="panel-head"><div><span className="panel-kicker">ACTIVITY</span><h2>Recent updates</h2></div><button>View all</button></div><div className="activity-list"><div><i className="activity-check"><Check/></i><span><strong>Escrow funded</strong><small>84 MON secured for rental #MN-2048</small></span><time>2 Oct</time></div><div><i><FileCheck2/></i><span><strong>Agreement signed</strong><small>Both parties confirmed the rental terms</small></span><time>1 Oct</time></div><div><i><BadgeCheck/></i><span><strong>Owner verified</strong><small>Property control proof confirmed</small></span><time>30 Sep</time></div></div></article>
+            <article className="panel quick-panel"><div className="panel-head"><div><span className="panel-kicker">QUICK ACTIONS</span><h2>What do you need?</h2></div></div><div className="quick-grid"><button><ReceiptText/><span>Payment history</span><ArrowRight/></button><button><FileCheck2/><span>Upload evidence</span><ArrowRight/></button><button><Gavel/><span>Open a dispute</span><ArrowRight/></button><button><Heart/><span>Saved homes</span><ArrowRight/></button></div></article>
+          </div>
+        </>}
+
+        {tab !== 'Overview' && <div className="tab-page"><div className="tab-title"><span className="kicker">RENTER PORTAL</span><h1>{tab}</h1><p>{tab === 'My rentals' ? 'Your agreements, home records, lease timeline, and documents.' : tab === 'Payments' ? 'A transparent history of every escrow deposit and rent release.' : tab === 'Disputes' ? 'Review evidence windows and follow community resolution activity.' : 'Manage your portable rental identity and notification preferences.'}</p></div><div className="panel placeholder-panel"><div className="placeholder-icon">{tab === 'My rentals' ? <HomeIcon/> : tab === 'Payments' ? <ReceiptText/> : tab === 'Disputes' ? <Gavel/> : <UserRound/>}</div><h2>{tab} workspace</h2><p>This detailed workspace is prepared for the live Monad contracts and indexer. The current prototype does not create or alter onchain data.</p><button className="primary-btn" onClick={() => setTab('Overview')}>Return to overview</button></div></div>}
+      </div>
+    </section>
+  </div>;
 }
 
 function App() {
@@ -31,6 +87,8 @@ function App() {
   };
 
   const toggleSaved = (id: number) => setSaved(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
+
+  if (connected) return <Dashboard onDisconnect={() => setConnected(false)} />;
 
   return <div id="top">
     <header className="nav-wrap">
