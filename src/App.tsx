@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { ArrowDownRight, ArrowRight, ArrowUpRight, BadgeCheck, BedDouble, Bell, Building2, CalendarDays, Check, ChevronDown, CircleDollarSign, Clock3, FileCheck2, Gavel, Heart, Home as HomeIcon, KeyRound, LayoutDashboard, LogOut, MapPin, Menu, MessageCircle, ReceiptText, Search, ShieldCheck, Sparkles, UserRound, Wallet, X } from 'lucide-react';
 import { homes, type Home, shorten } from './data';
+import TestPayment from './TestPayment';
 
 const demoWalletAddress = '0x7A81d44eC024f229b65071A60f9dD6f210b5e441';
 
@@ -38,6 +39,7 @@ function Dashboard({ address, onDisconnect }: { address: string; onDisconnect: (
       <header className="dash-topbar"><button className="dash-menu" onClick={() => setMobileNav(true)}><Menu/></button><div><span>MON-Nest /</span><strong>{tab}</strong></div><div className="dash-tools"><button aria-label="Notifications"><Bell size={19}/><i/></button><div className="mini-avatar">SJ</div></div></header>
 
       <div className="dash-content">
+        <TestPayment />
         {tab === 'Overview' && <>
           <div className="dash-welcome"><div><span className="kicker">YOUR RENTAL</span><h1>Good evening, Shreejay.</h1><p>Everything is in order at Sea Glass Residence.</p></div><button className="quiet-button"><MessageCircle size={17}/>Message owner</button></div>
 
@@ -146,6 +148,7 @@ function App() {
       <section className="ticker"><div>NO BROKER FEES <span>✦</span> ONCHAIN ESCROW <span>✦</span> VERIFIED LISTINGS <span>✦</span> COMMUNITY RESOLUTION <span>✦</span> BUILT ON MONAD <span>✦</span></div></section>
 
       <section className="homes-section container" id="homes">
+        <TestPayment />
         <div className="section-head"><div><span className="kicker">CURATED & VERIFIED</span><h2>A better place to land.</h2></div><p>Every home carries an owner proof, property record, and transparent rental terms before you commit.</p></div>
         <div className="filters">
           <div className="search-box"><MapPin size={18}/><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by area or home" /></div>

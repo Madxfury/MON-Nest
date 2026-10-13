@@ -41,7 +41,7 @@ Cross-border AUSD and trading bounties are not targeted: forcing them into a ren
 4. Either party can open a dispute and reveal evidence to a randomly assigned, staked jury.
 5. The majority ruling settles escrow. Honest participation updates portable reputation and juror rewards.
 
-The web experience currently uses an explicitly labeled demo wallet and mock listings. It never requests funds or broadcasts a transaction.
+The web experience uses mock rental data. Injected wallets can connect; without one, the dashboard uses a demo account. The **MON-Nest payment test** is a single 0 MON test product that sends a zero-value self-transfer on Monad Testnet, charging network gas only. It displays submission, confirmation, cancellation, and error states plus an explorer link. It does not create a rental or fund escrow. Other rental transactions remain unconnected to deployed contracts.
 
 ## Implementation checklist
 
@@ -150,4 +150,4 @@ The prototype uses real residential photography from [Unsplash](https://unsplash
 
 ## Important scope note
 
-MON-Nest is a hackathon prototype. It does not currently hold funds, verify ownership, provide legal tenancy agreements, or adjudicate real disputes. Those claims remain unchecked until the corresponding onchain and operational systems are implemented and verified.
+MON-Nest is a hackathon prototype. The zero-value payment test is live wallet functionality; rental dashboards use illustrative data, and rental/payment/dispute/profile workspaces remain placeholders. The web app does not currently hold rental funds, verify ownership, provide legal tenancy agreements, or adjudicate real disputes. Those claims remain unchecked until the corresponding onchain and operational systems are implemented and verified.
