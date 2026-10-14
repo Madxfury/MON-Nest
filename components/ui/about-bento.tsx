@@ -4,14 +4,14 @@ import { Card } from '@/components/ui/card';
 
 type Props = { catalogCount?: number; cityCount?: number; onConnect?: () => void; connected?: boolean; connecting?: boolean; availability?: 'loading' | 'ready' | 'error' | 'unconfigured' };
 
-export function AboutBento({ catalogCount = 48, cityCount = 8, onConnect, connected = false, connecting = false, availability = 'unconfigured' }: Props = {}) {
+export function AboutBento({ catalogCount = 58, cityCount = 8, onConnect, connected = false, connecting = false, availability = 'unconfigured' }: Props = {}) {
   const status = availability === 'ready' ? 'Ready on Monad Testnet' : availability === 'loading' ? 'Checking availability…' : availability === 'error' ? 'Availability temporarily unavailable' : 'Contract setup pending';
   return <section id="how" className="about-bento py-20 sm:py-24" aria-labelledby="booking-steps-title">
     <div className="container">
       <div className="mx-auto mb-12 max-w-[680px] text-center">
         <span className="text-[11px] font-bold tracking-[.14em] text-[#6746d9] uppercase">How the testnet booking works</span>
         <h2 id="booking-steps-title" className="mt-4 mb-5 text-[40px] font-bold leading-[1.08] tracking-[-.045em] sm:text-[56px]">Four clear steps.</h2>
-        <p className="text-[15px] leading-7 text-[#766f65]">Free homes share one booking record; paid homes hold rent and deposit in escrow. These illustrative listings do not grant real tenancy.</p>
+        <p className="text-[15px] leading-7 text-[#766f65]">Each home shares one booking record with public availability on Monad Testnet. These illustrative listings do not grant real tenancy.</p>
       </div>
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:auto-rows-[270px] lg:grid-cols-4">
         <Card data-bento-card="discover" className="group relative flex min-h-[400px] flex-col justify-between overflow-clip rounded-[24px] border-[#dedbd5] bg-white p-7 md:col-span-2 md:p-10 lg:row-span-2">
@@ -21,7 +21,7 @@ export function AboutBento({ catalogCount = 48, cityCount = 8, onConnect, connec
           <div className="relative z-10">
             <span className="inline-flex rounded-full bg-[#6746d9] px-4 py-2 text-[10px] font-bold tracking-[.12em] text-white uppercase">01 · Home discovery</span>
             <h3 className="mt-7 text-[32px] font-bold leading-[1.08] tracking-[-.045em] sm:text-[52px]">Choose a home.<br/><span className="text-[#6746d9]">Find your nest.</span></h3>
-            <p className="mt-5 max-w-[350px] text-[15px] leading-7 text-[#766f65]">Open a listing to see its live availability or its escrow terms on Monad Testnet.</p>
+            <p className="mt-5 max-w-[350px] text-[15px] leading-7 text-[#766f65]">Open a listing to see its live availability and booking terms on Monad Testnet.</p>
           </div>
           <div className="relative z-10 mt-8">
             <div className="mb-6 flex gap-8 border-t border-[#dedbd5] pt-5">

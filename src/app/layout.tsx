@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import './globals.css';
 import './bento.css';
-import './restored-ui.css';
+import './site.css';
 
 const brandFont = localFont({ src: './fonts/SpaceGrotesk-Bold.ttf', weight: '700', style: 'normal', display: 'swap', variable: '--font-brand' });
 

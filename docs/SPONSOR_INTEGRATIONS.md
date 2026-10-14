@@ -1,6 +1,6 @@
 # Sponsor integration evidence
 
-This is a Monad **Testnet** build (chain 10143). The final account provider is **Mera**, selected by the owner. Dynamic and Privy are alternatives, not active integrations or bounty claims.
+This is a Monad **Testnet** build (chain 10143). The final account provider is **Mera**. Dynamic and Privy are alternatives, not active integrations or bounty claims.
 
 ## Mera — integrated, device verification pending
 
@@ -18,7 +18,7 @@ Official reference: [Mera](https://github.com/category-labs/mera). The SDK is pr
 
 ## Envio — generated, typechecked, receipt mapping tested; hosting pending
 
-The supplied HyperSync and HyperRPC credentials are stored in ignored root `.env.local` as `ENVIO_API_TOKEN` and `ENVIO_HYPERRPC_TOKEN`. On 2026-10-14, an authenticated HyperSync query and HyperRPC chain-ID request both succeeded for Monad Testnet (10143). Run `npm run envio:check` to repeat these read-only checks without printing credentials. `indexer/run-envio.mjs` loads the ignored root credentials for codegen/dev, and generated configuration references the HyperRPC token through an environment placeholder, never a literal secret. HyperSync is the primary indexer source; HyperRPC is a fallback. The current HyperRPC free package is limited to five requests/minute, so it is not the visitor-facing primary RPC.
+HyperSync and HyperRPC credentials are stored in ignored root `.env.local` as `ENVIO_API_TOKEN` and `ENVIO_HYPERRPC_TOKEN`. On 2026-10-14, an authenticated HyperSync query and HyperRPC chain-ID request both succeeded for Monad Testnet (10143). Run `npm run envio:check` to repeat these read-only checks without printing credentials. `indexer/run-envio.mjs` loads the ignored root credentials for codegen/dev, and generated configuration references the HyperRPC token through an environment placeholder, never a literal secret. HyperSync is the primary indexer source; HyperRPC is a fallback. The current HyperRPC free package is limited to five requests/minute, so it is not the visitor-facing primary RPC.
 
 `indexer/config.yaml`, `schema.graphql`, and `src/handlers/rentals.ts` implement booking/listing, registry, escrow funding/release, disputes, court commitments/reveals/results, and reputation entities. Histories retain every event, rather than overwriting previous bookings. IDs include chain and contract, and the app queries only configured deployments.
 
@@ -72,9 +72,10 @@ Token availability alone cannot enable funding: even if both testnet assets appe
 - [x] CRE SDK typecheck and authenticated receiver security tests.
 - [x] Aurora network capability check; fail closed on missing testnet support.
 - [x] Live Aurora route-availability frontend/API with retry, timestamps, source/destination checks and offline handling.
-- [x] Authenticate supplied Envio HyperSync/HyperRPC tokens against Monad Testnet without logging secrets.
+- [x] Authenticate configured Envio HyperSync/HyperRPC tokens against Monad Testnet without logging secrets.
 - [x] Enable only Monad Testnet for the Alchemy app and verify chain-ID access.
-- [ ] User-approved Monad Testnet contract deployment; record address/block/receipt.
+- [x] Monad Testnet contract addresses and deployment blocks recorded in `src/deployments/monadTestnet.json`.
+- [ ] Verify recorded deployments and renter/owner receipts on the current public site.
 - [ ] Real Mera WebAuthn ceremony and funded booking on production domain.
 - [ ] Hosted Envio caught up; production history/profile query verified.
 - [ ] Alchemy URL configured and chain 10143 reads/simulation/broadcast verified.

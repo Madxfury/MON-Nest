@@ -21,3 +21,10 @@ integrations/**/node_modules/
 integrations/cre/config.staging.json
 integrations/cre/project.yaml
 integrations/cre/secrets.yaml
+
+# Local development instructions and generated review artifacts
+/AGENTS.md
+/.agents/
+/.codex/
+/work/
+/outputs/

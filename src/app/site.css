@@ -1,4 +1,4 @@
-/* Previously approved MON-Nest styling, retained alongside the bento component. */
+/* MON-Nest brand theme, component styling, and responsive layouts. */
 .brand-logo{display:block;width:56px;height:56px;flex:none;object-fit:contain}
 .logo{gap:8px;white-space:nowrap}
 .brand-wordmark{display:inline-flex;align-items:center;font-family:var(--font-brand),'Manrope',sans-serif;font-size:25px;font-weight:700;line-height:1;letter-spacing:-.055em}

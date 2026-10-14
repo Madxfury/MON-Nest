@@ -23,7 +23,7 @@ button.onclick=async()=>{button.disabled=true;try{
  const receipt=await contract.deploymentTransaction().wait();if(receipt.status!==1)throw Error('Deployment failed.');
  const response=await fetch('/result',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({hash})});const result=await response.json();if(!response.ok)throw Error(result.error);
  document.getElementById('result').textContent='NEXT_PUBLIC_MON_NEST_BOOKINGS_ADDRESS='+result.address+'\\nNEXT_PUBLIC_MON_NEST_BOOKINGS_DEPLOY_BLOCK='+result.block;
- const link=document.createElement('a');link.href='https://testnet.monadvision.com/tx/'+hash;link.target='_blank';link.textContent='View deployment receipt ↗';document.getElementById('link').replaceChildren(link);status.textContent='Contract deployed and all 58 homes verified. Return to Codex to connect the app.';
+ const link=document.createElement('a');link.href='https://testnet.monadvision.com/tx/'+hash;link.target='_blank';link.textContent='View deployment receipt ↗';document.getElementById('link').replaceChildren(link);status.textContent='Contract deployed and all 58 homes verified. Return to MON-Nest to connect the app.';
 }catch(e){status.textContent=e.shortMessage||e.message;button.disabled=false;}};
 </script></body></html>`;
 http.createServer(async (req, res) => {

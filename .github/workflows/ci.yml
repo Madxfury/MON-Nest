@@ -1,0 +1,35 @@
+name: Quality checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  application:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Production build and TypeScript
+        run: npm run build -- --webpack
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - name: Passkey signing and session tests
+        run: npm run wallet:test
+      - name: Aurora capability and API tests
+        run: npm run aurora:test
