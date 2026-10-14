@@ -6,7 +6,7 @@
 
 [Explore MON-Nest](https://mon-nest.vercel.app) · [The architecture](#under-the-surface) · [Run locally](#make-yourself-at-home) · [Demo walkthrough](docs/TECHNICAL_DEMO_SCRIPT.md)
 
-[![Quality checks](https://github.com/Madxfury/MON-Nest/actions/workflows/ci.yml/badge.svg)](https://github.com/Madxfury/MON-Nest/actions/workflows/ci.yml) ![Monad Testnet](https://img.shields.io/badge/MONAD-TESTNET-6746D9?style=flat-square) ![Next.js](https://img.shields.io/badge/NEXT.JS-REACT-17130F?style=flat-square) ![TypeScript](https://img.shields.io/badge/TYPESCRIPT-TYPED-3178C6?style=flat-square) ![Solidity](https://img.shields.io/badge/SOLIDITY-0.8.28-675F51?style=flat-square)
+[![Quality checks](https://github.com/Madxfury/MON-Nest/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/Madxfury/MON-Nest/actions/workflows/ci.yml) ![Monad Testnet](https://img.shields.io/badge/MONAD-TESTNET-6746D9?style=flat-square) ![Next.js](https://img.shields.io/badge/NEXT.JS-REACT-17130F?style=flat-square) ![TypeScript](https://img.shields.io/badge/TYPESCRIPT-TYPED-3178C6?style=flat-square) ![Solidity](https://img.shields.io/badge/SOLIDITY-0.8.28-675F51?style=flat-square)
 
 <sub>The animation illustrates the booking journey; it is not a transaction feed. <a href="docs/media/rental-rails.png">View the still version.</a></sub>
 
