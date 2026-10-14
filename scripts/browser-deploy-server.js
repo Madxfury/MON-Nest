@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const artifact = require('../artifacts/contracts/MonNestBookings.sol/MonNestBookings.json');
 const { JsonRpcProvider, Contract } = require('ethers');
-const signer = '0x2733Bd3F25B762Afc860a4B34aC38E5B5D932563';
+const signer = '0x810b9DE1242A2FBf8Fd099b488663967D98fB3d9';
 const broker = '0xc0aB4B8462792E0BeCE8D5e7d6e31CF4716c08CB';
 const origin = 'http://localhost:3011';
 let result = null;
@@ -12,7 +12,9 @@ const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewp
 const button=document.getElementById('deploy'),status=document.getElementById('status');
 button.onclick=async()=>{button.disabled=true;try{
  if(!window.ethereum)throw Error('Open this local page in Chrome with MetaMask enabled.');
- const provider=new ethers.BrowserProvider(window.ethereum);await provider.send('eth_requestAccounts',[]);
+ const provider=new ethers.BrowserProvider(window.ethereum);
+ const connectedAccounts=await provider.send('eth_accounts',[]);
+ if(!connectedAccounts.length)await provider.send('eth_requestAccounts',[]);
  const account=await provider.getSigner();if((await account.getAddress()).toLowerCase()!=='${signer.toLowerCase()}')throw Error('Select the deployer wallet shown above in MetaMask.');
  try{await provider.send('wallet_switchEthereumChain',[{chainId:'0x279f'}]);}catch(e){if(e.code!==4902)throw e;await provider.send('wallet_addEthereumChain',[{chainId:'0x279f',chainName:'Monad Testnet',nativeCurrency:{name:'MON',symbol:'MON',decimals:18},rpcUrls:['https://testnet-rpc.monad.xyz'],blockExplorerUrls:['https://testnet.monadvision.com']}]);await provider.send('wallet_switchEthereumChain',[{chainId:'0x279f'}]);}
  const fresh=new ethers.BrowserProvider(window.ethereum);if((await fresh.getNetwork()).chainId!==10143n)throw Error('Select Monad Testnet.');
@@ -24,7 +26,7 @@ button.onclick=async()=>{button.disabled=true;try{
  const response=await fetch('/result',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({hash})});const result=await response.json();if(!response.ok)throw Error(result.error);
  document.getElementById('result').textContent='NEXT_PUBLIC_MON_NEST_BOOKINGS_ADDRESS='+result.address+'\\nNEXT_PUBLIC_MON_NEST_BOOKINGS_DEPLOY_BLOCK='+result.block;
  const link=document.createElement('a');link.href='https://testnet.monadvision.com/tx/'+hash;link.target='_blank';link.textContent='View deployment receipt ↗';document.getElementById('link').replaceChildren(link);status.textContent='Contract deployed and all 68 homes verified. Return to MON-Nest to connect the app.';
-}catch(e){status.textContent=e.shortMessage||e.message;button.disabled=false;}};
+}catch(e){const message=e.shortMessage||e.info?.error?.message||e.message;status.textContent=String(message).includes('already pending')?'A MetaMask connection request is already open. Complete or reject it in MetaMask, then try again.':message;button.disabled=false;}};
 </script></body></html>`;
 http.createServer(async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
