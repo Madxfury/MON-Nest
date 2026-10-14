@@ -59,14 +59,21 @@ export type BookingHistoryEvent = {
 export async function readAllBookings(listingIds: number[]): Promise<Record<number, BookingSnapshot>> {
   if (!bookingsAddress) throw new Error('Booking contract is not configured.');
   if (listingIds.length > 58 || listingIds.some(id => !Number.isSafeInteger(id) || id < 1 || id > 58) || new Set(listingIds).size !== listingIds.length) throw new Error('Invalid catalog listing IDs.');
-  const [listings, current, rented] = await bookingsClient.readContract({
-    address: bookingsAddress, abi: bookingsAbi, functionName: 'getBookingSnapshots', args: [listingIds.map(BigInt)],
-  });
-  if (listings.length !== listingIds.length || current.length !== listingIds.length || rented.length !== listingIds.length) throw new Error('Unexpected catalog response.');
-  return Object.fromEntries(listingIds.map((id, index) => [id, {
-    renter: current[index].renter, bookedAt: Number(current[index].bookedAt), expiresAt: Number(current[index].expiresAt),
-    paidWei: current[index].paidWei, priceWei: listings[index].priceWei, active: listings[index].active, rented: rented[index],
-  }]));
+  // The first deployed booking ledger capped snapshot requests at 48 IDs. Keep
+  // reads compatible during contract migrations so one oversized call cannot
+  // make every otherwise valid home appear unavailable.
+  const chunks = Array.from({ length: Math.ceil(listingIds.length / 48) }, (_, index) => listingIds.slice(index * 48, (index + 1) * 48));
+  const snapshots = await Promise.all(chunks.map(async ids => {
+    const [listings, current, rented] = await bookingsClient.readContract({
+      address: bookingsAddress, abi: bookingsAbi, functionName: 'getBookingSnapshots', args: [ids.map(BigInt)],
+    });
+    if (listings.length !== ids.length || current.length !== ids.length || rented.length !== ids.length) throw new Error('Unexpected catalog response.');
+    return ids.map((id, index) => [id, {
+      renter: current[index].renter, bookedAt: Number(current[index].bookedAt), expiresAt: Number(current[index].expiresAt),
+      paidWei: current[index].paidWei, priceWei: listings[index].priceWei, active: listings[index].active, rented: rented[index],
+    }] as const);
+  }));
+  return Object.fromEntries(snapshots.flat());
 }
 
 // Small eth_getLogs windows keep the unindexed payload and RPC response bounded.
