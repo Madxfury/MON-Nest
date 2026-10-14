@@ -1,6 +1,5 @@
 """Render the README's finite booking animation. Requires Python 3 and Pillow."""
 from pathlib import Path
-import math
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -18,6 +17,8 @@ def font(name, size):
 FONTS = {k: font(n, s) for k, n, s in [('brand', 'brand', 26), ('title', 'brand', 68),
           ('italic', 'serif', 76), ('body', 'body', 18), ('small', 'body', 13),
           ('label', 'brand', 17), ('stat', 'brand', 32)]}
+LOGO = Image.open(ROOT / 'public/brand/mon-nest-logo.png').convert('RGBA')
+LOGO = LOGO.resize((220*SCALE, 220*SCALE), Image.Resampling.LANCZOS)
 
 def render(progress):
     im = Image.new('RGB', (W*SCALE, H*SCALE), BG)
@@ -33,6 +34,8 @@ def render(progress):
         d.ellipse(((x-r)*SCALE,(y-r)*SCALE,(x+r)*SCALE,(y+r)*SCALE), fill=color)
     for x in range(0,W,48): line([(x,0),(x,H)],GRID)
     for y in range(0,H,48): line([(0,y),(W,y)],GRID)
+    # Center the supplied brand asset between the headline and catalog statistics.
+    im.paste(LOGO, (600*SCALE, 76*SCALE), LOGO)
     text((50,28),'MON', 'brand'); text((116,28),'—', 'brand', PURPLE); text((150,28),'Nest','brand',PURPLE)
     text((838,36),'RENTAL RAILS / MONAD TESTNET','small',MUTED)
     text((48,92),'Rent without','title')
@@ -74,7 +77,7 @@ def render(progress):
 MEDIA.mkdir(parents=True,exist_ok=True)
 cover = render(1)
 cover.save(MEDIA/'rental-rails.png',optimize=True)
-palette=cover.quantize(colors=96)
+palette=cover.quantize(colors=256)
 frames=[render(i/71).quantize(palette=palette,dither=Image.Dither.NONE) for i in range(72)]
 frames[0].save(MEDIA/'rental-rails.gif',save_all=True,append_images=frames[1:],
                duration=100,loop=1,optimize=True,disposal=1)
