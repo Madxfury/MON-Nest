@@ -58,7 +58,7 @@ export type BookingHistoryEvent = {
 
 export async function readAllBookings(listingIds: number[]): Promise<Record<number, BookingSnapshot>> {
   if (!bookingsAddress) throw new Error('Booking contract is not configured.');
-  if (listingIds.length > 58 || listingIds.some(id => !Number.isSafeInteger(id) || id < 1 || id > 58) || new Set(listingIds).size !== listingIds.length) throw new Error('Invalid catalog listing IDs.');
+  if (listingIds.length > 68 || listingIds.some(id => !Number.isSafeInteger(id) || id < 1 || id > 68) || new Set(listingIds).size !== listingIds.length) throw new Error('Invalid catalog listing IDs.');
   // The first deployed booking ledger capped snapshot requests at 48 IDs. Keep
   // reads compatible during contract migrations so one oversized call cannot
   // make every otherwise valid home appear unavailable.

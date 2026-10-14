@@ -10,21 +10,21 @@ describe('MON-Nest public bookings', function () {
     return { admin, broker, renter, nextRenter, outsider, bookings };
   }
 
-  it('configures all 58 complimentary homes during deployment and returns a batched snapshot', async function () {
+  it('configures all 68 complimentary homes during deployment and returns a batched snapshot', async function () {
     const { bookings } = await fixture();
-    for (let id = 1; id <= 58; id++) {
+    for (let id = 1; id <= 68; id++) {
       const listing = await bookings.listings(id);
       expect(listing.priceWei).to.equal(0);
       expect(listing.durationSeconds).to.equal(30 * 86400);
       expect(listing.active).to.equal(true);
     }
-    const ids = Array.from({ length: 58 }, (_, index) => index + 1);
+    const ids = Array.from({ length: 68 }, (_, index) => index + 1);
     const [configured, current, rented] = await bookings.getBookingSnapshots(ids);
-    expect(configured.length).to.equal(58);
+    expect(configured.length).to.equal(68);
     expect(configured.every(listing => listing.active && listing.priceWei === 0n)).to.equal(true);
     expect(current.every(booking => booking.renter === ethers.ZeroAddress)).to.equal(true);
     expect(rented.every(value => !value)).to.equal(true);
-    await expect(bookings.getBookingSnapshots(Array.from({ length: 59 }, (_, index) => index + 1))).to.be.revertedWith('Too many listings');
+    await expect(bookings.getBookingSnapshots(Array.from({ length: 69 }, (_, index) => index + 1))).to.be.revertedWith('Too many listings');
   });
 
   it('records a zero-MON booking and makes the home unavailable to every wallet', async function () {

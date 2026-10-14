@@ -8,7 +8,7 @@ const brandFont = localFont({ src: './fonts/SpaceGrotesk-Bold.ttf', weight: '700
 
 export const metadata: Metadata = {
   title: 'MON-Nest',
-  description: 'Explore 58 illustrative homes and make verifiable 0 MON testnet bookings with shared availability on Monad.',
+  description: 'Explore 68 illustrative homes and make verifiable 0 MON testnet bookings with shared availability on Monad.',
   metadataBase: new URL('https://mon-nest.vercel.app'),
   icons: {
     icon: { url: '/brand/mon-nest-logo.png', type: 'image/png', sizes: '2000x2000' },
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'MON-Nest',
-    description: '58 illustrative 0 MON testnet booking homes with shared onchain availability.',
+    description: '68 illustrative 0 MON testnet booking homes with shared onchain availability.',
     images: ['/homes/hero-home.jpg'],
   },
 };

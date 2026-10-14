@@ -22,7 +22,7 @@ MON-Nest brings home discovery, passkey accounts, shared availability, and rent 
 
 <table>
 <tr>
-<td width="33%"><strong>58 homes</strong><br/>An illustrative catalog with search, city filters, favorites, and image-to-detail navigation.</td>
+<td width="33%"><strong>68 homes</strong><br/>An illustrative catalog with search, city filters, favorites, and image-to-detail navigation.</td>
 <td width="33%"><strong>8 cities</strong><br/>A responsive collection designed for browsing on a phone or a desktop.</td>
 <td width="33%"><strong>0 MON</strong><br/>Every catalog home is complimentary; network gas is paid separately.</td>
 </tr>
@@ -43,7 +43,7 @@ The interface uses a restrained grid, custom brand typography, a compact feature
 | :--- | :--- | :--- | :--- |
 | Browse a home and review its shared availability. | Create or recover a Mera passkey account, or connect an existing wallet. | Review the amount, recipient, and network gas before signing. | Check the receipt and the shared booking record. |
 
-An active booking prevents another reservation until expiry. All 58 catalog homes are complimentary 0 MON stays configured for 30 days. The separate rental protocol contains monthly releases, deposit withdrawal, and dispute handling for future escrow flows. These are **Monad Testnet examples with illustrative properties**, not real tenancy offers.
+An active booking prevents another reservation until expiry. All 68 catalog homes are complimentary 0 MON stays configured for 30 days. The separate rental protocol contains monthly releases, deposit withdrawal, and dispute handling for future escrow flows. These are **Monad Testnet examples with illustrative properties**, not real tenancy offers.
 
 ## Under the surface
 
@@ -99,7 +99,7 @@ cp .env.example .env.local
 npm run dev -- --webpack --port 3001
 ```
 
-Open **http://localhost:3001**. Service credentials are optional for browsing. The app reads recorded testnet deployments from `src/deployments/monadTestnet.json`; environment variables override those values. The recorded ledger must be configured for the full 58-home catalog before every booking can be enabled. Transaction controls depend on available RPC access and verified contract state.
+Open **http://localhost:3001**. Service credentials are optional for browsing. The app reads recorded testnet deployments from `src/deployments/monadTestnet.json`; environment variables override those values. The recorded ledger must be configured for the full 68-home catalog before every booking can be enabled. Transaction controls depend on available RPC access and verified contract state.
 
 <details>
 <summary><strong>Configuration & verification commands</strong></summary>

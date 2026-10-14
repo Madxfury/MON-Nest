@@ -6,7 +6,7 @@ MON-Nest uses a complimentary booking ledger and includes a separate escrow-base
 
 `MonNestBookings.sol` holds one active booking per listing. `book(listingId, expectedBroker)` checks the reviewed broker, active availability, and exact payment, then records the renter and expiry and emits `HomeBooked`. Expired bookings become available again; prior events remain in the account history.
 
-The current catalog contains **58 complimentary homes, IDs 1 through 58**. The constructor and deployment scripts configure them at **0 MON for 30 days**. Network gas is paid separately. If the owner changes a listing's price, the contract requires that exact payment and forwards it to the recorded broker. The broker cannot book its own listing.
+The current catalog contains **68 complimentary homes, IDs 1 through 68**. The constructor and deployment scripts configure them at **0 MON for 30 days**. Network gas is paid separately. If the owner changes a listing's price, the contract requires that exact payment and forwards it to the recorded broker. The broker cannot book its own listing.
 
 ## Escrow-based rentals
 
@@ -14,7 +14,7 @@ The recorded deployment manifest maps 36 earlier demo properties to registry rec
 
 The deployer owns the registered demo homes. Use a different renter wallet when testing the separate escrow protocol. These records represent illustrative properties and do not establish real property ownership or tenancy.
 
-The manifest predates the 58-home catalog update. Check the recorded booking ledger configuration before testing the complete catalog; deploy or configure the ledger to match the current source when needed.
+The manifest predates the 68-home catalog update. Check the recorded booking ledger configuration before testing the complete catalog; deploy or configure the ledger to match the current source when needed.
 
 ## Recorded contracts
 
@@ -43,7 +43,7 @@ npm run contracts:deploy:testnet           # All five rental contracts
 
 The full deployment writes the manifest and registers demo property records in batches. Review addresses, roles, and receipts in the explorer before using them. Keep deployment private keys local; never put them in Git, public environment variables, or the web deployment.
 
-For a browser-wallet booking deployment, run `npm run contracts:deploy:browser` and open `http://localhost:3011` in the browser containing the configured deployer. The helper requires its configured deployer and broker addresses, verifies all 58 complimentary listings, and shows the deployment receipt. Review its configuration before use. Deployment requires an explicit wallet approval.
+For a browser-wallet booking deployment, run `npm run contracts:deploy:browser` and open `http://localhost:3011` in the browser containing the configured deployer. The helper requires its configured deployer and broker addresses, verifies all 68 complimentary listings, and shows the deployment receipt. Review its configuration before use. Deployment requires an explicit wallet approval.
 
 ## Indexing and hosted configuration
 

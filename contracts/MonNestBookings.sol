@@ -34,7 +34,7 @@ contract MonNestBookings is Ownable, ReentrancyGuard {
         broker = initialBroker;
         emit BrokerChanged(address(0), initialBroker);
 
-        for (uint256 listingId = 1; listingId <= 58; listingId++) {
+        for (uint256 listingId = 1; listingId <= 68; listingId++) {
             _setListing(listingId, 0, 30 days, true);
         }
     }
@@ -63,7 +63,7 @@ contract MonNestBookings is Ownable, ReentrancyGuard {
 
     /// @notice Batch availability for the catalog, avoiding one RPC request per home.
     function getBookingSnapshots(uint256[] calldata listingIds) external view returns (Listing[] memory configured, Booking[] memory current, bool[] memory rented) {
-        require(listingIds.length <= 58, 'Too many listings');
+        require(listingIds.length <= 68, 'Too many listings');
         configured = new Listing[](listingIds.length);
         current = new Booking[](listingIds.length);
         rented = new bool[](listingIds.length);

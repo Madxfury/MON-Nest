@@ -37,7 +37,7 @@ describe('Envio receipt-to-entity integration', function () {
     await time.increase(31 * 86400);
     await replay(bookings.connect(owner).book(4, broker.address));
     expect(stores.Booking.rows.size).to.equal(2);
-    expect(stores.Listing.rows.size).to.equal(58);
+    expect(stores.Listing.rows.size).to.equal(68);
     await replay(registry.connect(owner).register(ethers.id('listing'), ethers.id('ownership')));
     await replay(registry.verify(1));
     expect([...stores.Property.rows.values()][0].verified).to.equal(true);

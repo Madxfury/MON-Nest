@@ -41,7 +41,7 @@ def render(progress):
     text((48,92),'Rent without','title')
     text((48,168),'the trust gap.','italic',PURPLE)
     text((52,262),'A familiar experience. A shared onchain answer.','body',MUTED)
-    for x,number,label in [(830,'58','ILLUSTRATIVE HOMES'),(1020,'8','CITIES')]:
+    for x,number,label in [(830,'68','ILLUSTRATIVE HOMES'),(1020,'8','CITIES')]:
         text((x,130),number,'stat'); text((x,178),label,'small',MUTED)
     circle(838,229,5,LIME); text((854,219),'DISCOVER · SIGN · VERIFY','small',LIME)
     xs = [50,330,610,890]
