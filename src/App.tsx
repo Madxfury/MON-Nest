@@ -1,5 +1,8 @@
 'use client';
 
+import AboutBento from '@/components/ui/about-bento';
+import Image from 'next/image';
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPublicClient, formatEther, http, type Address, type Hash } from 'viem';
 import { monadTestnet } from 'viem/chains';
@@ -16,8 +19,14 @@ import SponsorIntegrations from './SponsorIntegrations';
 import { bookingsAbi, bookingsAddress, bookingsClient, bookingsDeployBlock, expectedBrokerAddress, readAccountBookingHistory, readAllBookings, readBookingHistory, type BookingHistoryEvent, type BookingSnapshot } from './bookings';
 
 
+const navigationItems = [
+  { id: 'homes', label: 'Find a home' }, { id: 'how', label: 'How it works' },
+  { id: 'trust', label: 'Trust layer' }, { id: 'jury', label: 'Roadmap' },
+  { id: 'architecture', label: 'Architecture' },
+];
+
 function Logo({ onHome }: { onHome?: () => void }) {
-  return <a className="logo" href="#top" aria-label="MON-Nest home" onClick={onHome ? event => { event.preventDefault(); onHome(); } : undefined}><span className="logo-mark">M</span><span>MON—NEST</span></a>;
+  return <a className="logo" href="#top" aria-label="MON-Nest home" onClick={onHome ? event => { event.preventDefault(); onHome(); } : undefined}><Image className="brand-logo" src="/brand/mon-nest-logo.png" alt="" width={56} height={56} sizes="56px" loading="eager"/><span className="brand-wordmark">MON<span className="brand-wordmark-separator">—</span><span className="brand-wordmark-name">Nest</span></span></a>;
 }
 
 function Profile({ address, saved, bookings, bookingHistory, accountHistory, accountHistoryStatus, availability, onHome, onOpenHome, onDisconnect }: { address: string; saved: number[]; bookings: Record<number, BookingSnapshot>; bookingHistory: Record<number, BookingHistoryEvent[]>; accountHistory: BookingHistoryEvent[]; accountHistoryStatus: 'idle' | 'loading' | 'ready' | 'error'; availability: 'loading' | 'ready' | 'error' | 'unconfigured'; onHome: () => void; onOpenHome: (homeId: number) => void; onDisconnect: () => void }) {
@@ -117,6 +126,20 @@ function App({ alchemyConfigured = false }: { alchemyConfigured?: boolean }) {
     return () => window.removeEventListener('keydown', escape);
   }, []);
   const [menu, setMenu] = useState(false);
+  const [activeSection, setActiveSection] = useState('homes');
+  useEffect(() => {
+    const update = () => {
+      let current = 'homes';
+      for (const item of navigationItems) {
+        const section = document.getElementById(item.id);
+        if (section && section.getBoundingClientRect().top <= 180) current = item.id;
+      }
+      setActiveSection(current);
+    };
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+    return () => window.removeEventListener('scroll', update);
+  }, []);
   const [saved, setSaved] = useState<number[]>([]);
   useEffect(() => {
     if (!walletAccount) { setSaved([]); return; }
@@ -184,6 +207,11 @@ function App({ alchemyConfigured = false }: { alchemyConfigured?: boolean }) {
     setStoredHomeHistory({ key: historyStorageKey, events: next });
   };
 
+  const openListing = (home: Home) => {
+    recordHomeHistory(home.id, 'Viewed listing');
+    setSelected(home);
+  };
+
   const visibleHomes = useMemo(() => homes.filter(home =>
     (city === 'All cities' || home.city === city) &&
     `${home.title} ${home.area} ${home.city}`.toLowerCase().includes(search.toLowerCase())
@@ -207,17 +235,13 @@ function App({ alchemyConfigured = false }: { alchemyConfigured?: boolean }) {
 
   return <div id="top">
     <header className="nav-wrap">
-      <nav className="nav container">
+      <nav className="nav container" aria-label="Main navigation">
         <Logo />
-        <div className={`nav-links ${menu ? 'open' : ''}`}>
-          <a href="#homes" onClick={() => setMenu(false)}>Find a home</a>
-          <a href="#how" onClick={() => setMenu(false)}>How it works</a>
-          <a href="#trust" onClick={() => setMenu(false)}>Trust layer</a>
-          <a href="#jury" onClick={() => setMenu(false)}>Roadmap</a>
-          <a href="#architecture" onClick={() => setMenu(false)}>Architecture</a>
+        <div id="main-navigation" className={`nav-links ${menu ? 'open' : ''}`}>
+          {navigationItems.map(item => <a key={item.id} href={`#${item.id}`} className={activeSection === item.id ? 'active' : undefined} aria-current={activeSection === item.id ? 'location' : undefined} onClick={() => { setActiveSection(item.id); setMenu(false); }}>{item.label}</a>)}
         </div>
-        <button className="wallet-btn" disabled={connecting} aria-busy={connecting} onClick={connected ? () => setShowProfile(true) : connect}><Wallet size={17} />{connected ? `Profile · ${shorten(walletAccount)}` : connecting ? 'Connecting…' : 'Connect account'}</button>
-        <button className="menu-btn" onClick={() => setMenu(!menu)} aria-label="Toggle menu">{menu ? <X /> : <Menu />}</button>
+        <button className="wallet-btn" disabled={connecting} aria-busy={connecting} aria-label={connected ? 'Open account profile' : 'Connect account'} onClick={connected ? () => setShowProfile(true) : connect}><Wallet size={17} /><span className="wallet-label">{connected ? `Profile · ${shorten(walletAccount)}` : connecting ? 'Connecting…' : 'Connect account'}</span></button>
+        <button className="menu-btn" onClick={() => setMenu(!menu)} aria-label="Toggle menu" aria-expanded={menu} aria-controls="main-navigation">{menu ? <X /> : <Menu />}</button>
       </nav>
     </header>
 
@@ -226,8 +250,8 @@ function App({ alchemyConfigured = false }: { alchemyConfigured?: boolean }) {
     <main>
       <section className="hero container">
         <div className="hero-copy">
-          <div className="eyebrow"><span className="status-dot" />MON-Nest · Monad Testnet prototype</div>
-          <h1>Rent without the<br/><em>trust gap.</em></h1>
+          <div className="eyebrow"><span className="status-dot" />Mera-Powered UX on Monad</div>
+          <h1>Rent without<br/><span className="hero-title-line">the <em>trust gap.</em></span></h1>
           <p className="hero-sub">Discover a home, connect your wallet, and rent through testnet escrow that protects your rent and deposit, or try one of twelve free 0 MON stays.</p>
           <div className="hero-actions"><a className="primary-btn" href="#homes">Explore homes <ArrowRight size={18}/></a><a className="text-link" href="#how">See how it works <span>↘</span></a></div>
           <div className="proof-row"><div><strong>36 homes</strong><span>rent through escrow</span></div><div><strong>12 homes</strong><span>free 0 MON stays</span></div><div><strong>2%</strong><span>flat platform fee</span></div></div>
@@ -236,11 +260,15 @@ function App({ alchemyConfigured = false }: { alchemyConfigured?: boolean }) {
           <div className="hero-photo" role="img" aria-label="Bright, modern rental home interior" />
           <div className="floating-card escrow-card"><div className="mini-icon"><Wallet size={20}/></div><div><span>Testnet booking</span><strong>0 MON + network gas</strong></div><BadgeCheck size={21}/></div>
           <div className="floating-card verified-card"><BadgeCheck size={18}/><span>Shared status<br/><strong>Readable onchain</strong></span></div>
-          <div className="mon-orbit">M</div>
+          <div className="mon-orbit" aria-hidden="true"><Image src="/brand/mon-nest-logo.png" alt="" width={112} height={112} sizes="(max-width: 620px) 88px, 112px"/></div>
         </div>
       </section>
 
-      <section className="ticker"><div>ESCROW-PROTECTED RENT <span>✦</span> FREE 0 MON STAYS <span>✦</span> SHARED AVAILABILITY <span>✦</span> WALLET RECORDS <span>✦</span> MONAD TESTNET <span>✦</span> ILLUSTRATIVE HOMES <span>✦</span></div></section>
+      <section className="ticker" aria-label="MON-Nest features"><div className="ticker-track">
+        {Array.from({ length: 8 }, (_, copy) => <div className="ticker-group" key={copy} aria-hidden={copy > 0}>
+          {['0 MON BOOKINGS', 'SHARED AVAILABILITY', 'WALLET RECORDS', 'MONAD TESTNET', 'ILLUSTRATIVE HOMES'].map(label => <span className="ticker-item" key={label}>{label}<span className="ticker-separator" aria-hidden="true">|</span></span>)}
+        </div>)}
+      </div></section>
 
       <section className="homes-section container" id="homes">
         <div className="section-head"><div><span className="kicker">EXPLORE THE COLLECTION</span><h2>A better place to land.</h2></div><p>Explore 48 illustrative homes across eight cities. Twelve offer free 0 MON testnet stays; the other 36 rent through testnet escrow that protects your rent and deposit.</p></div>
@@ -251,20 +279,15 @@ function App({ alchemyConfigured = false }: { alchemyConfigured?: boolean }) {
         </div>
         <div className="home-grid">
           {visibleHomes.slice((page - 1) * 12, page * 12).map(home => <article className="home-card" key={home.id}>
-            <div className="home-image"><img loading="lazy" src={home.image} alt={`${home.title} illustrative interior`} /><span className={`trust-badge ${home.complimentary && availability === 'ready' && bookings[home.id]?.rented ? 'rented' : ''}`}>{!home.complimentary ? 'Preview home' : availability !== 'ready' ? availability === 'loading' ? 'Checking availability' : 'Booking unavailable' : bookings[home.id]?.rented ? 'Rented' : bookings[home.id]?.active && bookings[home.id]?.priceWei === BigInt(0) ? '0 MON · Available' : 'Unavailable'}</span><button className={`heart ${saved.includes(home.id) ? 'active' : ''}`} onClick={() => toggleSaved(home.id)} aria-label={`Save ${home.title}`}><Heart size={19} fill={saved.includes(home.id) ? 'currentColor' : 'none'}/></button></div>
-            <div className="home-content"><div className="home-location"><MapPin size={14}/>{home.area}, {home.city}</div><h3>{home.title}</h3><div className="home-meta"><span><BedDouble size={16}/>{home.beds} bed</span><span>{home.baths} bath</span><span>{home.size} ft²</span></div><div className="tags">{home.tags.map(t => <span key={t}>{t}</span>)}</div><div className="home-bottom"><div><strong>{home.rent} MON</strong><span>/ month</span></div><button onClick={() => { recordHomeHistory(home.id, 'Viewed listing'); setSelected(home); }}>{home.complimentary && availability === 'ready' && bookings[home.id]?.rented ? 'View rental' : home.complimentary && availability === 'ready' && bookings[home.id]?.active && bookings[home.id]?.priceWei === BigInt(0) ? 'View & book' : 'View details'} <ArrowRight size={16}/></button></div></div>
+            <div className="home-image"><button className="home-image-trigger" aria-label={`View details for ${home.title}`} aria-haspopup="dialog" onClick={() => openListing(home)}><img loading="lazy" src={home.image} alt={`${home.title} illustrative interior`} /></button><span className={`trust-badge ${home.complimentary && availability === 'ready' && bookings[home.id]?.rented ? 'rented' : ''}`}>{!home.complimentary ? 'Preview home' : availability !== 'ready' ? availability === 'loading' ? 'Checking availability' : 'Booking unavailable' : bookings[home.id]?.rented ? 'Rented' : bookings[home.id]?.active && bookings[home.id]?.priceWei === BigInt(0) ? '0 MON · Available' : 'Unavailable'}</span><button className={`heart ${saved.includes(home.id) ? 'active' : ''}`} onClick={() => toggleSaved(home.id)} aria-label={`Save ${home.title}`}><Heart size={19} fill={saved.includes(home.id) ? 'currentColor' : 'none'}/></button></div>
+            <div className="home-content"><div className="home-location"><MapPin size={14}/>{home.area}, {home.city}</div><h3>{home.title}</h3><div className="home-meta"><span><BedDouble size={16}/>{home.beds} bed</span><span>{home.baths} bath</span><span>{home.size} ft²</span></div><div className="tags">{home.tags.map(t => <span key={t}>{t}</span>)}</div><div className="home-bottom"><div><strong>{home.rent} MON</strong><span>/ month</span></div><button onClick={() => openListing(home)}>{home.complimentary && availability === 'ready' && bookings[home.id]?.rented ? 'View rental' : home.complimentary && availability === 'ready' && bookings[home.id]?.active && bookings[home.id]?.priceWei === BigInt(0) ? 'View & book' : 'View details'} <ArrowRight size={16}/></button></div></div>
           </article>)}
         </div>
         {visibleHomes.length === 0 && <div className="panel placeholder-panel"><h3>No homes match your search</h3><p>Try a different neighborhood or choose all cities.</p><button className="primary-btn" onClick={() => { setSearch(''); setCity('All cities'); }}>Clear filters</button></div>}
         {visibleHomes.length > 12 && <nav className="catalog-pagination" aria-label="Home listing pages"><button disabled={page === 1} onClick={() => setPage(page - 1)}>Previous</button><span>Page {page} of {Math.ceil(visibleHomes.length / 12)}</span><button disabled={page === Math.ceil(visibleHomes.length / 12)} onClick={() => setPage(page + 1)}>Next <ArrowRight size={15}/></button></nav>}
       </section>
 
-      <section className="steps" id="how"><div className="container"><div className="section-head light"><div><span className="kicker">HOW THE TESTNET BOOKING WORKS</span><h2>Four clear steps.</h2></div><p>Free homes share one booking record per home; paid homes hold rent and deposit in escrow until the lease closes or a jury rules. These illustrative listings do not grant real tenancy.</p></div><div className="step-grid">
-        <div className="step"><span>01</span><div className="step-icon"><Building2/></div><h3>Choose a home</h3><p>Open a listing to see its live availability or its escrow terms on Monad Testnet.</p></div>
-        <div className="step"><span>02</span><div className="step-icon"><Wallet/></div><h3>Connect your wallet</h3><p>Review the amount and network gas in your wallet before approving.</p></div>
-        <div className="step"><span>03</span><div className="step-icon"><FileCheck2/></div><h3>Confirm the booking</h3><p>The contract records your address and a 30-day booking after the transaction succeeds.</p></div>
-        <div className="step"><span>04</span><div className="step-icon"><BadgeCheck/></div><h3>See shared status</h3><p>The home shows Rented for other visitors until the booking period ends.</p></div>
-      </div></div></section>
+      <AboutBento catalogCount={homes.length} cityCount={new Set(homes.map(home => home.city)).size} onConnect={connect} connected={connected} connecting={connecting} availability={availability}/>
 
       <section className="trust container" id="trust">
         <div className="trust-panel"><div className="trust-copy"><span className="kicker">THE BOOKING RECORD</span><h2>One home. One shared answer.</h2><p>MON-Nest reads availability from a Monad Testnet contract. A successful booking records the renter and end date; the same rented status appears for every visitor.</p><ul><li><FileCheck2/>A receipt for the booking transaction</li><li><ShieldCheck/>The contract rejects duplicate active bookings</li><li><Sparkles/>The broker destination is visible before payment</li></ul><a href={bookingsAddress ? `https://testnet.monadvision.com/address/${bookingsAddress}` : 'https://testnet.monadvision.com'} target="_blank" rel="noreferrer" className="outline-btn">Open Monad explorer <ArrowRight size={17}/></a></div><div className="ledger-card"><div className="ledger-head"><span>MON-NEST BOOKINGS</span><span className="live-pill">TESTNET</span></div><div className="ledger-amount"><span>Booking amount</span><strong>0 MON</strong><small>Network gas paid separately</small></div><div className="timeline"><div className="done"><i>1</i><span><strong>Availability checked</strong><small>Read from the booking contract</small></span></div><div className="done"><i>2</i><span><strong>Wallet approval</strong><small>Renter reviews the transaction</small></span></div><div className="current"><i>3</i><span><strong>Booking recorded</strong><small>Renter and end date stored onchain</small></span></div><div><i>4</i><span><strong>Rented status displayed</strong><small>Shared across visitors and wallets</small></span></div></div></div></div>

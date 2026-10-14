@@ -1,0 +1,14 @@
+@layer theme,base,components,utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+@theme inline{--color-card:#fff;--color-card-foreground:var(--ink);--color-muted-foreground:var(--muted)}
+@layer base{
+  .about-bento *,.about-bento *::before,.about-bento *::after{border-width:0;border-style:solid}
+  .about-bento h2,.about-bento h3,.about-bento p{margin:0}
+  .about-bento svg{display:block}
+}
+.about-bento{background-color:#fbfaf8;color:#17130f}
+.about-bento h2,.about-bento h3{font-family:'Manrope',sans-serif}
+.about-bento .bento-explore{color:#fff}
+.about-bento .bento-wallet-button{font:700 12px 'DM Sans',sans-serif;cursor:pointer}
+.about-bento [data-bento-card="status"] a:focus-visible{outline-color:#fff}

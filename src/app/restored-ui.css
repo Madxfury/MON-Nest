@@ -1,0 +1,105 @@
+/* Previously approved MON-Nest styling, retained alongside the bento component. */
+.brand-logo{display:block;width:56px;height:56px;flex:none;object-fit:contain}
+.logo{gap:8px;white-space:nowrap}
+.brand-wordmark{display:inline-flex;align-items:center;font-family:var(--font-brand),'Manrope',sans-serif;font-size:25px;font-weight:700;line-height:1;letter-spacing:-.055em}
+.brand-wordmark-separator{display:block;font-size:.4em;line-height:1;margin:0 .18em;color:var(--purple)}
+.brand-wordmark-name{color:#6746d9}
+.mon-orbit{width:112px;height:112px;bottom:-32px;background:transparent;border:0;border-radius:0}
+.mon-orbit img{display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 8px 12px #17130f26)}
+.status-dot{flex-shrink:0;animation:status-blink 2.2s ease-in-out infinite}
+@keyframes status-blink{0%,100%{opacity:1;box-shadow:0 0 0 4px #cce89b}50%{opacity:.4;box-shadow:0 0 0 7px #cce89b59}}
+.hero{min-height:auto;padding-top:24px}
+.hero h1{letter-spacing:-.025em;word-spacing:.1em;line-height:1.08}
+.hero-title-line{white-space:nowrap}
+.hero-copy{align-self:start}
+.home-image-trigger{display:block;width:100%;height:100%;border:0;padding:0;background:transparent;cursor:pointer}
+.home-image-trigger:focus-visible{outline:3px solid var(--purple);outline-offset:-4px}
+.home-image .trust-badge{pointer-events:none}
+.ticker{background:#8468ff1f;color:#563b99;border-top:1px solid #8468ff1a;border-bottom:1px solid #8468ff1a}
+.ticker .ticker-track{display:flex;width:max-content;animation:marquee-scroll 32s linear infinite}
+.ticker .ticker-group{display:flex;align-items:center;gap:0;flex-shrink:0;padding:0;animation:none}
+.ticker .ticker-item{display:inline-flex;align-items:center;gap:16px;flex-shrink:0;color:inherit;padding:0 16px 0 0}
+.ticker .ticker-separator{color:#7b63be;padding:0}
+.ticker:hover .ticker-track{animation-play-state:paused}
+@keyframes marquee-scroll{from{transform:translateX(0)}to{transform:translateX(-12.5%)}}
+:root{--canvas-line:#17130f0a}
+body,.steps,.trust-panel,.jury,.cta,footer,.about-bento{
+  background-image:linear-gradient(var(--canvas-line) 1px,transparent 1px),linear-gradient(90deg,var(--canvas-line) 1px,transparent 1px);
+  background-size:56px 56px,56px 56px;
+}
+body{background-color:#fbfaf8;background-attachment:fixed}
+.eyebrow{background:#ffffffdb;border:1px solid #17130f14;box-shadow:0 4px 16px #17130f06}
+.filters,.home-card,.panel,.architecture-flow,.sponsor-grid article{border-color:#dedbd5;box-shadow:0 8px 30px #17130f06}
+.steps,.jury,footer{--canvas-line:#ffffff0a}
+.steps{background-color:#1b1823}
+.trust-panel{background-color:#f3f2ef;border:1px solid #ffffff;box-shadow:0 20px 60px #17130f0a}
+.jury{background-color:#7252ce}
+.cta{background-color:#f5f4f0;border:1px solid #ffffff;box-shadow:0 20px 60px #17130f0c}
+footer{background-color:#1b1724}
+footer .brand-wordmark-name,footer .brand-wordmark-separator{color:#c7b5ff}
+.nav-wrap{position:relative;top:auto;margin:12px 16px 0;background:transparent;backdrop-filter:none;border:0}
+.nav.container{width:100%;height:80px;padding:12px 22px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:20px;border:1px solid #17130f14;border-radius:999px;background:#fff;box-shadow:0 8px 24px #17130f0a}
+.nav .logo{gap:8px;padding:4px 12px 4px 6px;border:1px solid #17130f1a;border-radius:999px;color:var(--ink);background:#fff}
+.nav .brand-logo{width:40px;height:40px}
+.nav .brand-wordmark{font-size:22px}
+.nav .brand-wordmark-name,.nav .brand-wordmark-separator{color:#6746d9}
+.nav-links{position:static;justify-self:center;display:flex;flex-direction:row;align-items:center;gap:4px;padding:5px;background:#fff;border:1px solid #17130f0f;border-radius:999px;color:#68646d;font-family:var(--font-brand),sans-serif;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.nav-links a{padding:11px 13px;border:1px solid transparent;border-radius:999px;white-space:nowrap}
+.nav-links a:hover{color:var(--ink);background:#fff;border-color:#17130f1a}
+.nav-links a.active{color:var(--ink);background:#fff;border-color:#17130f26;box-shadow:0 2px 6px #17130f08}
+.nav .wallet-btn,.nav .menu-btn{justify-self:end;justify-content:center;min-height:46px;margin:0;border:1px solid #17130f26;background:#fff;color:var(--ink);box-shadow:inset 0 0 0 3px #17130f03;font-family:var(--font-brand),sans-serif;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.nav .wallet-btn{padding:12px 17px}
+.nav .wallet-btn:hover,.nav .menu-btn:hover{color:var(--ink);background:#fff;border-color:#17130f66;box-shadow:0 3px 10px #17130f0a}
+.nav .menu-btn{display:none;padding:10px}
+.nav a:focus-visible,.nav button:focus-visible{outline-color:var(--purple)}
+main section[id]{scroll-margin-top:24px}
+.toast{top:108px}
+@media(max-width:1100px){
+  .nav.container{grid-template-columns:minmax(0,1fr) auto auto;gap:10px}
+  .nav .menu-btn{display:flex}
+  .nav-links{display:none;position:absolute;top:calc(100% + 10px);left:12px;right:12px;width:calc(100% - 24px);justify-self:stretch;flex-direction:column;align-items:stretch;padding:10px;border-radius:24px;background:#fff;border-color:#17130f1a;box-shadow:0 16px 40px #17130f14}
+  .nav-links.open{display:flex}
+  .nav-links a{padding:14px 18px}
+  .nav .logo{justify-self:start}
+}
+@media(max-width:900px){.hero{padding-top:36px}}
+@media(max-width:620px){
+  body{background-attachment:scroll}
+  .brand-wordmark{font-size:22px}
+  .mon-orbit{width:88px;height:88px;bottom:-24px;right:16px}
+  .hero h1{font-size:clamp(40px,11.4vw,55px)}
+  .nav-wrap{top:auto;margin:8px 8px 0}
+  .nav.container{height:70px;padding:10px;gap:8px}
+  .nav .logo{padding:3px 10px 3px 3px;gap:5px}
+  .nav .brand-logo{width:34px;height:34px}
+  .nav .brand-wordmark{font-size:20px}
+  .nav .wallet-btn,.nav .menu-btn{width:44px;min-height:44px;padding:10px}
+  .nav .wallet-label{display:none}
+}
+@media(max-width:360px){.logo{gap:6px}.brand-logo{width:44px;height:44px}.brand-wordmark{font-size:20px}}
+
+/* Keep section transitions compact and let integration content use the full row. */
+.homes-section{padding:40px 0 24px}
+.section-head{margin-bottom:28px}
+.catalog-pagination{margin-top:24px}
+.about-bento{padding-block:32px}
+.about-bento .container>div:first-child{margin-bottom:32px}
+.trust{padding-block:32px}
+.jury{padding-block:40px}
+.cta{margin-block:24px}
+.sponsor-progress{grid-template-columns:minmax(0,1fr)}
+.sponsor-progress .aurora-route-card{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);column-gap:32px;align-items:start}
+.aurora-route-card>div:first-child,.aurora-route-card>strong,.aurora-route-card>.aurora-network-path,.aurora-route-card>.aurora-route-actions,.aurora-route-card>.aurora-funding-note{grid-column:1}
+.sponsor-progress .aurora-route-result{grid-column:2;grid-row:1 / span 5;min-width:0;padding-left:32px;border-left:1px solid var(--line);align-self:stretch}
+.aurora-route-result>p:first-child{margin-top:0}
+@media(max-width:900px){
+  .sponsor-progress .aurora-route-card{grid-template-columns:minmax(0,1fr)}
+  .sponsor-progress .aurora-route-result{grid-column:1;grid-row:auto;padding:16px 0 0;border-left:0;border-top:1px solid var(--line)}
+}
+@media(max-width:620px){
+  .homes-section{padding:32px 0 20px}
+  .about-bento{padding-block:28px}
+  .trust{padding-block:28px}
+  .jury{padding-block:32px}
+  .cta{margin-block:20px}
+}
