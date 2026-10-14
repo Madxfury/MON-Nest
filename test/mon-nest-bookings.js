@@ -10,25 +10,21 @@ describe('MON-Nest public bookings', function () {
     return { admin, broker, renter, nextRenter, outsider, bookings };
   }
 
-  it('configures all twelve complimentary homes during deployment', async function () {
+  it('configures all 58 complimentary homes during deployment and returns a batched snapshot', async function () {
     const { bookings } = await fixture();
-    for (const id of [4, 27, 29, 31, 32, 36, 38, 42, 45, 46, 47, 48]) {
+    for (let id = 1; id <= 58; id++) {
       const listing = await bookings.listings(id);
       expect(listing.priceWei).to.equal(0);
       expect(listing.durationSeconds).to.equal(30 * 86400);
       expect(listing.active).to.equal(true);
     }
-    expect((await bookings.listings(1)).active).to.equal(false);
-  });
-
-  it('returns a batched availability snapshot for the catalog', async function () {
-    const { broker, renter, bookings } = await fixture();
-    await bookings.connect(renter).book(45, broker.address);
-    const [configured, current, rented] = await bookings.getBookingSnapshots([1, 4, 45]);
-    expect(configured.map(listing => listing.active)).to.deep.equal([false, true, true]);
-    expect(current[2].renter).to.equal(renter.address);
-    expect(rented).to.deep.equal([false, false, true]);
-    await expect(bookings.getBookingSnapshots(Array.from({ length: 49 }, (_, index) => index + 1))).to.be.revertedWith('Too many listings');
+    const ids = Array.from({ length: 58 }, (_, index) => index + 1);
+    const [configured, current, rented] = await bookings.getBookingSnapshots(ids);
+    expect(configured.length).to.equal(58);
+    expect(configured.every(listing => listing.active && listing.priceWei === 0n)).to.equal(true);
+    expect(current.every(booking => booking.renter === ethers.ZeroAddress)).to.equal(true);
+    expect(rented.every(value => !value)).to.equal(true);
+    await expect(bookings.getBookingSnapshots(Array.from({ length: 59 }, (_, index) => index + 1))).to.be.revertedWith('Too many listings');
   });
 
   it('records a zero-MON booking and makes the home unavailable to every wallet', async function () {

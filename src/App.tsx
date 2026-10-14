@@ -252,9 +252,9 @@ function App({ alchemyConfigured = false }: { alchemyConfigured?: boolean }) {
         <div className="hero-copy">
           <div className="eyebrow"><span className="status-dot" />Mera-Powered UX on Monad</div>
           <h1>Rent without<br/><span className="hero-title-line">the <em>trust gap.</em></span></h1>
-          <p className="hero-sub">Discover a home, connect your wallet, and rent through testnet escrow that protects your rent and deposit, or try one of twelve free 0 MON stays.</p>
+          <p className="hero-sub">Discover a home, connect your wallet, and make a verifiable 0 MON testnet booking with shared availability.</p>
           <div className="hero-actions"><a className="primary-btn" href="#homes">Explore homes <ArrowRight size={18}/></a><a className="text-link" href="#how">See how it works <span>↘</span></a></div>
-          <div className="proof-row"><div><strong>36 homes</strong><span>rent through escrow</span></div><div><strong>12 homes</strong><span>free 0 MON stays</span></div><div><strong>2%</strong><span>flat platform fee</span></div></div>
+          <div className="proof-row"><div><strong>58 homes</strong><span>testnet booking catalog</span></div><div><strong>0 MON</strong><span>rent and deposit</span></div><div><strong>30 days</strong><span>shared booking period</span></div></div>
         </div>
         <div className="hero-visual">
           <div className="hero-photo" role="img" aria-label="Bright, modern rental home interior" />
@@ -271,7 +271,7 @@ function App({ alchemyConfigured = false }: { alchemyConfigured?: boolean }) {
       </div></section>
 
       <section className="homes-section container" id="homes">
-        <div className="section-head"><div><span className="kicker">EXPLORE THE COLLECTION</span><h2>A better place to land.</h2></div><p>Explore 48 illustrative homes across eight cities. Twelve offer free 0 MON testnet stays; the other 36 rent through testnet escrow that protects your rent and deposit.</p></div>
+        <div className="section-head"><div><span className="kicker">EXPLORE THE COLLECTION</span><h2>A better place to land.</h2></div><p>Explore 58 illustrative homes across eight cities. Every home supports a 0 MON testnet booking through the shared booking ledger.</p></div>
         <div className="filters">
           <div className="search-box"><MapPin size={18}/><input aria-label="Search homes by area or name" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by area or home" /></div>
           <label className="select-wrap"><select aria-label="Filter by city" value={city} onChange={e => setCity(e.target.value)}><option>All cities</option>{[...new Set(homes.map(home => home.city))].sort().map(name => <option key={name}>{name}</option>)}</select><ChevronDown size={16}/></label>
@@ -299,14 +299,14 @@ function App({ alchemyConfigured = false }: { alchemyConfigured?: boolean }) {
         <div className="section-head"><div><span className="kicker">UNDER THE HOOD</span><h2>Built for trust.<br/>Designed for everyday renting.</h2></div><p>Consumer Products & Payments is our primary track. Here’s where Monad is used today and where sponsor services fit into the rental journey.</p></div>
         <div className="architecture-flow">
           <article><span>01 · EXPERIENCE</span><h3>Find & connect</h3><p>Next.js serves the catalog and account profile. Mera derives a signing account from a passkey; existing wallets can also connect. No server stores your signing key.</p><small>Mera SDK integrated</small></article>
-          <article><span>02 · TRANSACTIONS</span><h3>Book & verify</h3><p>Free homes use a booking contract that prevents duplicate active reservations; paid homes open an escrow agreement against a verified property record. The app waits for a receipt before confirming.</p><small>{bookingsAddress ? 'Contract configured' : 'Contract deployment pending'}</small></article>
+          <article><span>02 · TRANSACTIONS</span><h3>Book & verify</h3><p>All 58 homes use a booking contract that prevents duplicate active reservations and exposes shared status. The app waits for a receipt before confirming.</p><small>{bookingsAddress ? 'Contract configured' : 'Contract deployment pending'}</small></article>
           <article><span>03 · RENTAL PROTOCOL</span><h3>Protect & resolve</h3><p>Separate Solidity contracts cover property verification, native MON escrow, staked jury voting, and reputation. These are locally tested and not connected to live rentals.</p><small>Written & locally tested</small></article>
           <article><span>04 · ACCOUNT RECORDS</span><h3>Read & verify</h3><p>Envio handlers turn booking, escrow, dispute, vote, and reputation events into account records. Booking history also reads chain logs when indexing is unavailable.</p><small>Indexer implemented · hosting pending</small></article>
         </div>
         <SponsorIntegrations alchemyConfigured={alchemyConfigured}/>
       </section>
 
-      <section className="cta container"><div><span className="kicker">TRY THE BOOKING FLOW</span><h2>Explore a home.<br/>See its status.</h2></div><div><p>Rent a paid home through escrow or choose a free 0 MON stay, and review every detail before connecting a wallet.</p><a href="#homes" className="primary-btn">Find your nest <ArrowRight size={18}/></a></div></section>
+      <section className="cta container"><div><span className="kicker">TRY THE BOOKING FLOW</span><h2>Explore a home.<br/>See its status.</h2></div><div><p>Choose any of the 58 free testnet homes and review every detail before connecting a wallet.</p><a href="#homes" className="primary-btn">Find your nest <ArrowRight size={18}/></a></div></section>
     </main>
 
     <footer><div className="container footer-grid"><div><Logo/><p>Explore homes and verify testnet booking status.</p></div><div><strong>Explore</strong><a href="#homes">Homes</a><a href="#how">How it works</a><a href="#jury">Roadmap</a></div><div><strong>Build</strong><a href="https://docs.monad.xyz" target="_blank" rel="noreferrer">Monad docs</a><a href="https://github.com/Madxfury/MON-Nest" target="_blank" rel="noreferrer">GitHub</a><a href="https://hackathon.monad.xyz/tracks" target="_blank" rel="noreferrer">Metropolis</a></div><div className="footer-note"><span>Built for Metropolis 2026</span><small>Consumer Products & Payments · Monad</small></div></div><div className="container foot-bottom"><span>© 2026 MON-Nest</span><span>Prototype · Illustrative homes · Testnet only</span></div></footer>
